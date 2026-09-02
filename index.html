@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>幻想シアター 公演プラン ツール</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="app-header">
+    <div class="header-title-group">
+      <!-- タイトル左のアイコン画像 (assets/ui/ に配置) -->
+      <img src="assets/ui/app-icon.png" alt="Icon" class="header-icon" onerror="this.src='assets/ui/main.webp'">
+      <h1>幻想シアター 公演プラン ツール</h1>
+    </div>
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="tab-main">メイン (キャスト / 公演)</button>
+      <button class="tab-btn" data-tab="tab-config">今期のキャスト</button>
+      <button class="tab-btn" data-tab="tab-chars">キャラクター管理</button>
+      <button class="tab-btn" data-tab="tab-tutorial">チュートリアル</button>
+    </nav>
+  </header>
+
+  <!-- 1. メイン画面 -->
+  <main id="tab-main" class="tab-content active">
+    <div class="main-summary-bar">
+      <div class="summary-item">難易度: <strong id="display-difficulty">-</strong></div>
+      <div class="summary-item">現在のキャスト: <strong id="display-cast-count">0</strong></div>
+      <div class="summary-item">サポートキャスト: <strong id="display-support-name">未設定</strong></div>
+      <button id="btn-select-support" class="btn btn-secondary btn-sm">サポート変更</button>
+    </div>
+
+    <div class="main-layout-grid">
+      <!-- 左側：公演キャスト（ドラッグ元） -->
+      <section class="card-panel">
+        <div class="panel-header">
+	<h2>
+  	<img src="assets/ui/book.webp" class="heading-icon">
+		本日のキャスト
+	</h2>
+        </div>
+        <p class="help-text">キャラカードを右側のセット枠へドラッグ＆ドロップで配置できます。</p>
+        
+        <div id="cast-groups-container">
+          <!-- JSで特別招待・開幕・待機キャストを動的生成 -->
+        </div>
+      </section>
+
+      <!-- 右側：編成・配置（ドロップ先） -->
+      <section class="card-panel">
+        <div class="panel-header">
+	<h2>
+         <img src="assets/ui/book.webp" class="heading-icon">
+		公演プラン
+	</h2>
+          <button id="btn-add-set" class="btn btn-primary">+ 編成</button>
+        </div>
+        <div id="sets-container" class="sets-list">
+          <!-- JSでセットカードを動的生成 -->
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 2. 今期の設定画面 -->
+  <main id="tab-config" class="tab-content">
+    <div class="config-center-panel">
+      <section class="card-panel">
+        <div class="panel-header">
+          <h2>
+  	<img src="assets/ui/book.webp" class="heading-icon">
+		今期の幻想シアター
+	</h2>
+          <button id="btn-reset-config" class="btn btn-danger btn-sm">設定をリセット</button>
+        </div>
+        
+        <div class="config-section">
+          <h3>1. 難易度選択</h3>
+          <select id="config-difficulty" class="input-select">
+            <option value="easy">イージー (3幕 / 8〜10人)</option>
+            <option value="normal">ノーマル (6幕 / 12〜14人)</option>
+            <option value="hard">ハード (8幕 / 16〜20人)</option>
+            <option value="master">マスター (10幕 / 22〜26人)</option>
+            <option value="tsukiyomi">月諭 (10幕 / 28〜32人)</option>
+          </select>
+        </div>
+
+        <div class="config-section">
+          <h3>2. 今期の元素</h3>
+          <div id="element-selector" class="element-btn-group"></div>
+        </div>
+
+        <div class="config-section">
+          <h3>3. 開幕キャスト</h3>
+          <div id="opening-cast-container" class="party-row"></div>
+        </div>
+
+        <div class="config-section">
+          <h3>4. 特別招待キャスト</h3>
+          <div id="special-cast-container" class="party-row"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 3. キャラクター管理画面 -->
+  <main id="tab-chars" class="tab-content">
+    <div class="chars-layout-grid">
+      <!-- 左：新規追加フォーム -->
+      <section class="card-panel">
+        <h2>+ キャラクター追加</h2>
+        <form id="form-add-char" class="char-form">
+          <div class="form-item">
+            <label>名前</label>
+            <input type="text" id="add-char-name" class="input-text" placeholder="例: マーヴィカ" required>
+          </div>
+          <div class="form-item">
+            <label>レアリティ</label>
+            <select id="add-char-rarity" class="input-select">
+              <option value="5">★5</option>
+              <option value="4">★4</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label>元素</label>
+            <select id="add-char-element" class="input-select">
+              <option value="pyro">炎</option>
+              <option value="hydro">水</option>
+              <option value="anemo">風</option>
+              <option value="electro">雷</option>
+              <option value="dendro">草</option>
+              <option value="cryo">氷</option>
+              <option value="geo">岩</option>
+            </select>
+          </div>
+          <div class="form-item">
+            <label>画像ファイル</label>
+            <label class="custom-file-upload">
+              <input type="file" id="add-char-file-input" accept="image/*">
+              <span id="add-char-file-label">＋ 画像を選択</span>
+            </label>
+            <input type="hidden" id="add-char-image-name">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">登録する</button>
+        </form>
+      </section>
+
+      <!-- 右：登録済み一覧 -->
+      <section class="card-panel">
+        <div class="panel-header">
+          <h2>キャラクター</h2>
+          <div class="filter-bar">
+            <select id="filter-element" class="input-select">
+              <option value="all">元素</option>
+              <option value="pyro">炎</option>
+              <option value="hydro">水</option>
+              <option value="anemo">風</option>
+              <option value="electro">雷</option>
+              <option value="dendro">草</option>
+              <option value="cryo">氷</option>
+              <option value="geo">岩</option>
+            </select>
+            <select id="filter-ownership" class="input-select">
+              <option value="all">すべてのキャラ</option>
+              <option value="owned">所持のみ</option>
+              <option value="unowned">未所持のみ</option>
+            </select>
+            <select id="filter-rarity" class="input-select">
+              <option value="all">レアリティ</option>
+              <option value="5">★5</option>
+              <option value="4">★4</option>
+            </select>
+          </div>
+        </div>
+        <p class="help-text">キャラカードをクリックと、編集・削除を行えます。</p>
+        <div id="char-management-list" class="cast-grid"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 4. チュートリアル画面 -->
+  <main id="tab-tutorial" class="tab-content">
+    <div class="tutorial-center-panel card-panel">
+      <h2>はじめての方へ</h2>
+      <p class="tutorial-lead">このツールは、幻想シアターをプレイする前に、誰をキャストとして出演させるか・どのパーティで挑むかを整理するための計画ツールです。</p>
+      <hr class="divider">
+      
+      <h3>1. 難易度を選択</h3>
+      <p>幻想シアターは、難易度によってステージの回数と必要なキャスト人数が変わります。</p>
+      <p><strong>基本となるステージの回数</strong><br>キャラクターは基本的に1人につき2回まで出演できます。そのため、幕数と同じ数のパーティを作る必要はありません。表のような目安で編成の数を作るといいでしょう｡</p>
+      
+      <table class="tutorial-table">
+        <thead>
+          <tr>
+            <th>難易度</th>
+            <th>ステージの上演回数</th>
+            <th>編成の数</th>
+            <th>おすすめのキャストの数</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>イージー</td><td>3幕</td><td>2セット</td><td>8〜10人</td></tr>
+          <tr><td>ノーマル</td><td>6幕</td><td>3セット</td><td>12〜14人</td></tr>
+          <tr><td>ハード</td><td>8幕</td><td>4セット</td><td>16〜20人</td></tr>
+          <tr><td>マスター</td><td>10幕</td><td>5セット</td><td>22〜26人</td></tr>
+          <tr><td>月諭</td><td>10幕</td><td>5セット</td><td>28〜32人</td></tr>
+        </tbody>
+      </table>
+
+      <blockquote class="tutorial-note">
+        <strong>ポイント</strong><br>
+        編成を組むだけでなく､臨機応変に自由枠をもたせると余裕ができます｡
+      </blockquote>
+
+      <h3>2. 「編成」を追加</h3>
+      <p>まずは <strong>Aセット・Bセット・Cセット...</strong> という形で、使いたいパーティを作って準備しておきます。</p>
+      </p>セットの名前を変えることができるので､パーティ名をつけたり､使いたいステージを入力しましょう｡
+    </div>
+  </main>
+
+  <!-- 専用デザインモーダル (ポップアップ) -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal-window">
+      <div class="modal-header">
+        <h3 id="modal-title">モーダルタイトル</h3>
+        <button id="modal-close" class="btn-close">✕</button>
+      </div>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
