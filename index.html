@@ -3,75 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>幻想シアター 公演プラン ツール</title>
+  <title>幻想シアター 編成ツール</title>
+  <link rel="icon" type="image/png" href="assets/ui/app-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@400;600;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header class="app-header">
-    <div class="header-title-group">
-      <!-- タイトル左のアイコン画像 (assets/ui/ に配置) -->
-      <img src="assets/ui/app-icon.png" alt="Icon" class="header-icon" onerror="this.src='assets/ui/main.webp'">
-      <h1>幻想シアター 公演プラン ツール</h1>
+    <div class="header-left-group">
+      <div class="header-title-group" data-tab="tab-title" role="button" tabindex="0" title="タイトル画面へ戻る">
+        <img src="assets/ui/app-icon.png" alt="Icon" class="header-icon" onerror="this.src='assets/ui/main.webp'">
+        <h1>幻想シアター 編成ツール</h1>
+      </div>
+      <nav class="tab-nav">
+        <button class="tab-btn" data-tab="tab-config">今期のキャスト</button>
+        <button class="tab-btn" data-tab="tab-main">キャスト管理</button>
+        <button class="tab-btn" data-tab="tab-stage">公演</button>
+      </nav>
     </div>
-    <nav class="tab-nav">
-      <button class="tab-btn active" data-tab="tab-main">メイン (キャスト / 公演)</button>
-      <button class="tab-btn" data-tab="tab-config">今期のキャスト</button>
-      <button class="tab-btn" data-tab="tab-chars">キャラクター管理</button>
-      <button class="tab-btn" data-tab="tab-tutorial">チュートリアル</button>
-    </nav>
+    <div class="header-right-group">
+      <div class="difficulty-label" id="display-difficulty">-</div>
+      <button class="tab-btn icon-btn" data-tab="tab-tutorial" title="チュートリアル">
+        <img src="assets/ui/tutorial_icon.png" alt="チュートリアル" class="tab-icon-img">
+      </button>
+      <button class="tab-btn icon-btn" data-tab="tab-chars" title="キャラクター管理">
+        <img src="assets/ui/character_icon.png" alt="キャラクター管理" class="tab-icon-img">
+      </button>
+    </div>
   </header>
 
-  <!-- 1. メイン画面 -->
-  <main id="tab-main" class="tab-content active">
-    <div class="main-summary-bar">
-      <div class="summary-item">難易度: <strong id="display-difficulty">-</strong></div>
-      <div class="summary-item">現在のキャスト: <strong id="display-cast-count">0</strong></div>
-      <div class="summary-item">サポートキャスト: <strong id="display-support-name">未設定</strong></div>
-      <button id="btn-select-support" class="btn btn-secondary btn-sm">サポート変更</button>
-    </div>
+  <!-- タイトル画面 -->
+  <main id="tab-title" class="tab-content active">
+    <section class="title-screen">
+      <img src="assets/ui/app-icon.png" alt="幻想シアターのロゴ">
+      <h2>幻想シアター 編成ツール</h2>
+    </section>
+  </main>
 
+  <!-- 1. キャスト管理画面 -->
+  <main id="tab-main" class="tab-content">
     <div class="main-layout-grid">
-      <!-- 左側：公演キャスト（ドラッグ元） -->
-      <section class="card-panel">
+      <!-- 左側：本日のキャスト -->
+      <section class="card-panel" id="cast-drop-return-zone">
         <div class="panel-header">
-	<h2>
-  	<img src="assets/ui/book.webp" class="heading-icon">
-		本日のキャスト
-	</h2>
+          <div class="title-with-count">
+            <h2>
+              <img src="assets/ui/book.webp" class="heading-icon">
+              本日のキャスト
+            </h2>
+            <span class="dynamic-count" id="display-cast-count">0人</span>
+          </div>
+          <div class="header-actions">
+            <button id="btn-toggle-reject" class="btn btn-secondary btn-sm">不採用を選択</button>
+            <button id="btn-exec-reject" class="btn btn-danger btn-sm" style="display:none;">選択分を不採用へ</button>
+          </div>
         </div>
         <p class="help-text">キャラカードを右側のセット枠へドラッグ＆ドロップで配置できます。</p>
         
-        <div id="cast-groups-container">
-          <!-- JSで特別招待・開幕・待機キャストを動的生成 -->
-        </div>
+        <div id="cast-groups-container"></div>
       </section>
 
-      <!-- 右側：編成・配置（ドロップ先） -->
+      <!-- 右側：公演プラン -->
       <section class="card-panel">
         <div class="panel-header">
-	<h2>
-         <img src="assets/ui/book.webp" class="heading-icon">
-		公演プラン
-	</h2>
+          <h2>
+            <img src="assets/ui/book.webp" class="heading-icon">
+            公演プラン
+          </h2>
           <button id="btn-add-set" class="btn btn-primary">+ 編成</button>
         </div>
-        <div id="sets-container" class="sets-list">
-          <!-- JSでセットカードを動的生成 -->
-        </div>
+        <div id="sets-container" class="sets-list"></div>
       </section>
     </div>
   </main>
 
-  <!-- 2. 今期の設定画面 -->
+  <!-- 2. 公演画面（3列レイアウト） -->
+  <main id="tab-stage" class="tab-content">
+    <div class="stage-3col-grid">
+      <!-- 左列：公演プラン ＋ 予備キャスト -->
+      <section class="card-panel stage-col">
+        <div class="panel-header">
+          <h2><img src="assets/ui/book.webp" class="heading-icon"> 公演プラン</h2>
+        </div>
+        <div id="stage-plan-container" class="sets-list"></div>
+        
+        <div class="stage-sub-section">
+          <h3>予備キャスト</h3>
+          <div id="stage-reserve-container" class="set-slots"></div>
+        </div>
+      </section>
+
+      <!-- 中央列：出演可能キャスト一覧 -->
+      <section class="card-panel stage-col">
+        <div class="panel-header">
+          <h2><img src="assets/ui/book.webp" class="heading-icon"> 出演可能キャスト</h2>
+          <button id="btn-add-hand-char" class="btn btn-primary btn-sm">＋ 追加</button>
+        </div>
+        <p class="help-text">手札内のキャラは活力(使用回数)が表示されます。カードをクリックすると追加・取り消しができます。</p>
+        <div id="stage-hand-container" class="cast-grid"></div>
+
+        <div class="stage-hand-footer">
+          <button id="btn-remove-hand-char" class="btn btn-secondary btn-sm">－ まとめて取り消し</button>
+        </div>
+
+        <div class="stage-sub-section" id="stage-performed-section" style="display:none;">
+          <h3>出演済みキャスト</h3>
+          <p class="help-text">現在の幕（下の←→で指定）より前に活力を使い切ったキャラはここに移動します。</p>
+          <div id="stage-hand-performed-container" class="cast-grid"></div>
+        </div>
+      </section>
+
+      <!-- 右列：上演準備（幕ごとの編成） -->
+      <section class="card-panel stage-col">
+        <div class="panel-header">
+          <h2><img src="assets/ui/book.webp" class="heading-icon"> 上演準備</h2>
+          <div class="act-pointer-controls">
+            <button id="btn-act-prev" class="btn btn-secondary btn-sm" title="ひとつ前の幕に戻る">←</button>
+            <span id="act-pointer-label" class="act-pointer-label">第1幕</span>
+            <button id="btn-act-next" class="btn btn-secondary btn-sm" title="次の幕に進める">→</button>
+          </div>
+        </div>
+        <p class="help-text">表示中の幕より前は「クリア済み」として扱われ、活力を使い切ったキャラは出演可能キャストから一時的に外れます。</p>
+        <div id="stage-acts-container" class="acts-list"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- 3. 今期の設定画面 -->
   <main id="tab-config" class="tab-content">
     <div class="config-center-panel">
       <section class="card-panel">
         <div class="panel-header">
-          <h2>
-  	<img src="assets/ui/book.webp" class="heading-icon">
-		今期の幻想シアター
-	</h2>
+          <h2><img src="assets/ui/book.webp" class="heading-icon">今期の幻想シアター</h2>
           <button id="btn-reset-config" class="btn btn-danger btn-sm">設定をリセット</button>
         </div>
         
@@ -104,10 +170,9 @@
     </div>
   </main>
 
-  <!-- 3. キャラクター管理画面 -->
+  <!-- 4. キャラクター管理画面 -->
   <main id="tab-chars" class="tab-content">
     <div class="chars-layout-grid">
-      <!-- 左：新規追加フォーム -->
       <section class="card-panel">
         <h2>+ キャラクター追加</h2>
         <form id="form-add-char" class="char-form">
@@ -146,7 +211,6 @@
         </form>
       </section>
 
-      <!-- 右：登録済み一覧 -->
       <section class="card-panel">
         <div class="panel-header">
           <h2>キャラクター</h2>
@@ -173,13 +237,13 @@
             </select>
           </div>
         </div>
-        <p class="help-text">キャラカードをクリックと、編集・削除を行えます。</p>
+        <p class="help-text">キャラカードをクリックすると、編集・削除を行えます。</p>
         <div id="char-management-list" class="cast-grid"></div>
       </section>
     </div>
   </main>
 
-  <!-- 4. チュートリアル画面 -->
+  <!-- 5. チュートリアル画面 -->
   <main id="tab-tutorial" class="tab-content">
     <div class="tutorial-center-panel card-panel">
       <h2>はじめての方へ</h2>
@@ -188,7 +252,7 @@
       
       <h3>1. 難易度を選択</h3>
       <p>幻想シアターは、難易度によってステージの回数と必要なキャスト人数が変わります。</p>
-      <p><strong>基本となるステージの回数</strong><br>キャラクターは基本的に1人につき2回まで出演できます。そのため、幕数と同じ数のパーティを作る必要はありません。表のような目安で編成の数を作るといいでしょう｡</p>
+      <p><strong>基本となるステージの回数</strong><br>キャラクターは基本的に1人につき2回まで出演できます。そのため、幕数と同じ数のパーティを作る必要はありません。</p>
       
       <table class="tutorial-table">
         <thead>
@@ -214,12 +278,18 @@
       </blockquote>
 
       <h3>2. 「編成」を追加</h3>
-      <p>まずは <strong>Aセット・Bセット・Cセット...</strong> という形で、使いたいパーティを作って準備しておきます。</p>
-      </p>セットの名前を変えることができるので､パーティ名をつけたり､使いたいステージを入力しましょう｡
+      <p>まずは Aセット・Bセット・Cセット... という形で、使いたいパーティを作って準備しておきます。</p>
     </div>
   </main>
 
-  <!-- 専用デザインモーダル (ポップアップ) -->
+  <footer class="site-disclaimer">
+    <p>幻想シアター編成ツールは、原神のファンによって制作された非公式・非商用のファンメイドWebサイトです。</p>
+    <p>原神に関連する画像、ゲーム内素材、名称等の著作権・商標権その他の知的財産権は、COGNOSPHEREおよび各権利者に帰属します。</p>
+    <p>本サイトはHoYoverse／COGNOSPHEREとは関係のない非公式サイトであり、公式の承認・提供・提携を受けたものではありません。</p>
+    <p>© All rights reserved by COGNOSPHERE. Other properties belong to their respective owners.</p>
+  </footer>
+
+  <!-- モーダル -->
   <div id="modal-overlay" class="modal-overlay hidden">
     <div class="modal-window">
       <div class="modal-header">

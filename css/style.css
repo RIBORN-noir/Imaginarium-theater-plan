@@ -1,38 +1,107 @@
 :root {
   --bg-color: #0f141d;
-  --panel-bg: #1a2232;
-  --panel-border: #2c384e;
+  --panel-color: #09091a; /* パネルの色 */
+  --panel-bg: color-mix(in srgb, var(--panel-color) 70%, transparent);
+  --panel-drag-highlight: 10%; /* ドラッグ中に白を混ぜる量 */
+  --panel-drag-color: color-mix(in srgb, var(--panel-color) calc(100% - var(--panel-drag-highlight)), white var(--panel-drag-highlight));
+  --panel-drag-bg: color-mix(in srgb, var(--panel-drag-color) 70%, transparent);
+  --panel-border: #403f79;
+  --panel-opacity: 10%; /* パネルの枠線の透明度 */
   --text-main: #e2e8f0;
   --text-sub: #94a3b8;
   --accent-gold: #e5b869;
   --accent-gold-hover: #f3cc84;
   --star5-color: #c89d53;
   --star4-color: #9172bf;
-  --danger-color: #ef4444;
-  --active-glow: #38bdf8;
+  --danger-color: #A83438;
+  --active-glow: #ADA8BB;
+  --card-color: #19162E; /* カード・入力欄・元素ボタンの色 */
+  --card-opacity: 90%; /* カード・入力欄の不透明度 */
+  --card-bg: color-mix(in srgb, var(--card-color) var(--card-opacity), transparent);
+  --deep-panel-color: #04040c; /* パーティAの色 */
+  --deep-panel-opacity: 40%; /* パーティAの不透明度 */
+  --deep-panel-bg: color-mix(in srgb, var(--deep-panel-color) var(--deep-panel-opacity), transparent);
+  --select-color: #08081a; /* 上演準備のパーティの色 */
+  --select-opacity: 50%; /* 上演準備のパーティの不透明度 */
+  --select-bg: color-mix(in srgb, var(--select-color) var(--select-opacity), transparent);
+  --section-color: #19162E; /* 上演準備の折りたたみの色 */
+  --section-opacity: 50%; /* 上演準備の折りたたみの不透明度 */
+  --section-bg: color-mix(in srgb, var(--section-color) var(--section-opacity), transparent);
+  --section-hover-color: #2A1F3F; /* 折りたたみにカーソルを乗せた時の色 */
+  --section-hover-opacity: 70%; /* 折りたたみにカーソルを乗せた時の不透明度 */
+  --section-hover-bg: color-mix(in srgb, var(--section-hover-color) var(--section-hover-opacity), transparent);
+  --muted-border: #4b5563;
+  --drag-bg: #1f2937;
+  --soft-gold-color: #e5b869; /* 選択状態の金色 */
+  --soft-gold-opacity: 20%; /* 選択状態の透明度 */
+  --soft-gold-bg: color-mix(in srgb, var(--soft-gold-color) var(--soft-gold-opacity), transparent);
+  --soft-gold-hover-opacity: 15%; /* 選択枠に重ねた時の透明度 */
+  --soft-gold-hover-bg: color-mix(in srgb, var(--soft-gold-color) var(--soft-gold-hover-opacity), transparent);
+  --soft-gold-slot-opacity: 6%; /* サポート枠の透明度 */
+  --soft-gold-slot-bg: color-mix(in srgb, var(--soft-gold-color) var(--soft-gold-slot-opacity), transparent);
+  --soft-blue-color: #38bdf8; /* 選択モードの青色 */
+  --soft-blue-opacity: 15%; /* 選択モードの透明度 */
+  --soft-blue-bg: color-mix(in srgb, var(--soft-blue-color) var(--soft-blue-opacity), transparent);
+  --soft-danger-color: #A83438; /* 未所持表示の赤色 */
+  --soft-danger-opacity: 20%; /* 未所持表示の透明度 */
+  --soft-danger-bg: color-mix(in srgb, var(--soft-danger-color) var(--soft-danger-opacity), transparent);
+  --dark-overlay-opacity: 80%; /* モーダル背景の透明度 */
+  --dark-overlay: color-mix(in srgb, #000000 var(--dark-overlay-opacity), transparent);
+  --dark-label-opacity: 85%; /* キャラ名表示の透明度 */
+  --dark-label-bg: color-mix(in srgb, #000000 var(--dark-label-opacity), transparent);
+  --dark-icon-opacity: 75%; /* 元素アイコン背景の透明度 */
+  --dark-icon-bg: color-mix(in srgb, #000000 var(--dark-icon-opacity), transparent);
+  --slot-bg: var(--panel-bg); /* 公演画面の空き枠 */
+  --shadow-opacity: 50%; /* カード影の透明度 */
+  --shadow-color: color-mix(in srgb, #000000 var(--shadow-opacity), transparent);
+  --gold-shadow-opacity: 40%; /* 金色の影の透明度 */
+  --gold-shadow: color-mix(in srgb, var(--soft-gold-color) var(--gold-shadow-opacity), transparent);
+  --text-on-accent: #000000;
+  --text-on-danger: #ffffff;
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: "Zen Old Mincho", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, serif;
+}
+
+html {
+  overflow-y: scroll;
 }
 
 body {
   background-color: var(--bg-color);
+  background-image: url("../assets/ui/theater_background.png");
+  background-size: cover;
+  background-position: center center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--text-main);
   padding: 20px;
 }
 
-/* ヘッダー・ナビゲーション */
+/* ヘッダー・ナビゲーション（1段のみ） */
 .app-header {
+  --header-border-width: 2px;
+  --header-padding-bottom: 15px;
+  --header-color: #09091a; /* ヘッダーの色 */
+  --header-opacity: 45%; /* ヘッダーの透明度 */
+  position: relative;
   display: flex;
+  width: calc(100% + 40px);
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--panel-border);
-  padding-bottom: 15px;
+  margin-top: -20px;
+  margin-left: -20px;
+  margin-right: -20px;
+  background: color-mix(in srgb, var(--header-color) var(--header-opacity), transparent);
+  padding-top: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: var(--header-padding-bottom);
 }
 
 .app-header h1 {
@@ -40,30 +109,128 @@ body {
   color: var(--accent-gold);
 }
 
-.tab-nav {
+.header-left-group {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 24px;
+  align-self: stretch;
 }
 
+.header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  align-self: stretch;
+}
+
+.tab-nav {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  align-self: stretch;
+}
+
+/* 主要3タブ：枠なしの文字だけのボタン */
 .tab-btn {
-  background: var(--panel-bg);
+  background: transparent;
+  border: none;
+  padding: 6px 4px;
+  border-radius: 0;
   color: var(--text-sub);
-  border: 1px solid var(--panel-border);
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
   font-weight: bold;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s ease;
+}
+
+.tab-btn:hover {
+  color: var(--text-main);
 }
 
 .tab-btn.active {
-  background: var(--accent-gold);
-  color: #000;
-  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.tab-nav .tab-btn {
+  position: relative;
+  align-self: stretch;
+}
+
+.tab-nav .tab-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: calc(-1 * (var(--header-padding-bottom) + var(--header-border-width)));
+  height: 2px;
+  background-color: var(--accent-gold);
+}
+
+/* チュートリアル／キャラクター管理：アイコンのみ・文字なし */
+.icon-btn {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.2s ease;
+}
+
+.icon-btn:hover,
+.icon-btn.active {
+  opacity: 1;
+}
+
+.header-right-group .icon-btn {
+  position: relative;
+  align-self: stretch;
+}
+
+.header-right-group .icon-btn.active::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: calc(-1 * (var(--header-padding-bottom) + var(--header-border-width)));
+  height: 2px;
+  background-color: var(--accent-gold);
+}
+
+.tab-icon-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  display: block;
+}
+
+.difficulty-label {
+  font-size: 0.85rem;
+  color: var(--accent-gold);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  white-space: nowrap;
 }
 
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
+.site-disclaimer {
+  margin: 24px 0 4px;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.65rem;
+  line-height: 1.6;
+  text-align: right;
+}
+
+.site-disclaimer p {
+  margin: 0;
+}
 
 /* パネル構造 */
 .card-panel {
@@ -81,6 +248,34 @@ body {
   margin-bottom: 12px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 「不採用を選択」「戻すキャストを選択」など、選択モード中のボタン強調表示 */
+.btn-secondary.active-mode {
+  background: var(--soft-blue-bg);
+  border-color: var(--active-glow);
+  color: var(--active-glow);
+}
+
+/* サポートキャスト未選択時の「＋選択」枠（公演プランの空枠と同じ雰囲気） */
+.char-card.support-slot {
+  border: 2px dashed var(--accent-gold);
+  background: var(--soft-gold-slot-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+  gap: 6px;
+  cursor: pointer;
+}
+.char-card.support-slot .plus-icon { font-size: 1.6rem; }
+.char-card.support-slot .support-label { font-size: 0.75rem; text-align: center; line-height: 1.3; }
+
 .help-text {
   font-size: 0.85rem;
   color: var(--text-sub);
@@ -88,33 +283,55 @@ body {
 }
 
 /* メイン画面レイアウト */
-.main-summary-bar {
+.title-with-count {
   display: flex;
-  gap: 25px;
-  align-items: center;
-  background: var(--panel-bg);
-  border: 1px solid var(--accent-gold);
-  border-radius: 8px;
-  padding: 12px 20px;
-  margin-bottom: 20px;
+  align-items: baseline;
+  gap: 12px;
 }
 
-.main-summary-bar strong {
+.title-with-count h2 {
+  margin: 0;
+}
+
+.dynamic-count {
+  font-size: 0.9rem;
   color: var(--accent-gold);
-  font-size: 1.1rem;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
 .main-layout-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 60% 40%;
   gap: 20px;
+  align-items: start;
 }
 
-/* キャラクターカード（110px × 140px 指定） */
+/* キャラクターカード (110px × 140px) */
 .cast-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  min-height: 50px;
+}
+
+/* 2.1 不採用エリア (ダークグレー/mutedトーン) */
+.rejected-drop-zone {
+  border: 1px dashed var(--muted-border);
+  background: var(--panel-bg);
+  padding: 10px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.rejected-drop-zone.drag-over {
+  background: var(--panel-drag-bg);
+}
+
+/* 2.1 不採用エリア内のキャラカード（グレーアウト＋モノクロ化） */
+.char-card.rejected-card {
+  opacity: 0.45;
+  filter: grayscale(100%);
 }
 
 .cast-group-section {
@@ -122,6 +339,11 @@ body {
 }
 
 .cast-group-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
   font-size: 0.95rem;
   color: var(--accent-gold);
   margin-bottom: 8px;
@@ -129,12 +351,34 @@ body {
   padding-bottom: 4px;
 }
 
-/* キャラカード基本定義とホバー浮遊感 */
+.cast-group-title .collapse-arrow {
+  font-size: 0.7rem;
+  color: var(--text-sub);
+  transition: transform 0.2s ease;
+}
+
+.cast-group-title.collapsed .collapse-arrow {
+  transform: rotate(-90deg);
+}
+
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cast-grid.collapsed {
+  display: none;
+}
+
+/* キャラカード基本定義 */
 .char-card {
   position: relative;
   width: 110px;
   height: 140px;
-  background: #0d121a;
+  background: var(--card-bg);
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid var(--panel-border);
@@ -149,36 +393,32 @@ body {
 .char-card.star-5 { border-color: var(--star5-color); }
 .char-card.star-4 { border-color: var(--star4-color); }
 
-/* ホバー時の浮遊感（星5・星4枠線色のまま上に浮く） */
 .char-card:hover:not(.assigned) {
   transform: translateY(-5px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 15px var(--shadow-color);
 }
 
-/* 選択時の周り発光エフェクト */
 .char-card.active-selected {
   border-color: var(--active-glow) !important;
   box-shadow: 0 0 10px var(--active-glow), 0 0 20px var(--active-glow) !important;
   transform: translateY(-3px);
 }
 
-/* 正方形（110x110）での完全収まり指定 */
 .char-card img.avatar, .party-slot img.avatar {
   width: 110px;
   height: 110px;
   object-fit: cover;
-  background: #252e3f;
+  background: var(--card-bg);
   display: block;
 }
 
-/* 指定フォルダの元素画像を表示（位置・サイズを厳密固定） */
 .char-card .elem-icon, .party-slot .elem-icon {
   position: absolute;
   top: 4px;
   left: 4px;
   width: 24px;
   height: 24px;
-  background: rgba(0, 0, 0, 0.75);
+  background: var(--dark-icon-bg);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -204,19 +444,72 @@ body {
   justify-content: center;
   line-height: 1.1;
   padding: 0 4px;
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--dark-label-bg);
   color: var(--text-main);
   width: 100%;
   word-break: break-all;
 }
 
-/* 重複防止の暗転（グレーアウト） */
+/* 3.2 活力（使用回数）バッジ */
+.vitality-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--dark-label-bg);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 1px 6px;
+  z-index: 3;
+}
+
 .char-card.assigned {
-  opacity: 0.35;
-  filter: grayscale(100%);
-  cursor: not-allowed !important;
+  opacity: 1;
+  border-color: var(--muted-border) !important;
+  cursor: default !important;
   transform: none !important;
   box-shadow: none !important;
+}
+
+.char-card.assigned > .avatar,
+.char-card.assigned > .elem-icon,
+.char-card.assigned > .name-label,
+.char-card.assigned > .vitality-badge {
+  opacity: 0.35;
+  filter: grayscale(100%);
+}
+
+.char-card.stage-unadded {
+  background: var(--card-color);
+  border-color: var(--muted-border) !important;
+}
+
+.char-card.stage-unadded > .avatar,
+.char-card.stage-unadded > .elem-icon,
+.char-card.stage-unadded > .name-label,
+.char-card.stage-unadded > .vitality-badge {
+  opacity: 0.35;
+  filter: grayscale(100%);
+}
+
+.char-card.is-grayed,
+.party-slot.is-grayed {
+  background: var(--card-color);
+  border-color: var(--muted-border) !important;
+}
+
+.char-card.is-grayed > .avatar,
+.char-card.is-grayed > .elem-icon,
+.char-card.is-grayed > .name-label,
+.char-card.is-grayed > .vitality-badge,
+.party-slot.is-grayed > .avatar,
+.party-slot.is-grayed > .elem-icon,
+.party-slot.is-grayed > .name-label,
+.party-slot.is-grayed > .vitality-badge {
+  opacity: 0.35;
+  filter: grayscale(100%);
 }
 
 /* パーティ・セット枠 */
@@ -227,10 +520,22 @@ body {
 }
 
 .set-card {
-  background: #111723;
+  background: var(--deep-panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   padding: 12px;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.set-card.dragging {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.set-card.drag-over-set {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 8px var(--gold-shadow);
 }
 
 .set-header {
@@ -254,7 +559,7 @@ body {
 }
 
 .set-slot-item {
-  background: #1a2232;
+  background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: 6px;
   padding: 6px;
@@ -267,7 +572,7 @@ body {
 .set-slot-item select {
   width: 100%;
   font-size: 0.75rem;
-  background: #0f141d;
+  background: var(--select-bg);
   color: var(--text-main);
   border: 1px solid var(--panel-border);
   border-radius: 4px;
@@ -284,7 +589,7 @@ body {
   align-items: center;
   justify-content: space-between;
   cursor: pointer;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--slot-bg);
   overflow: hidden;
   transition: all 0.2s ease;
 }
@@ -295,7 +600,7 @@ body {
 
 .party-slot.drag-over {
   border-color: var(--accent-gold);
-  background: rgba(229, 184, 105, 0.15);
+  background: var(--soft-gold-hover-bg);
 }
 
 .party-slot.filled {
@@ -309,7 +614,113 @@ body {
   margin: auto;
 }
 
-/* 中央配置レイアウト (今期の設定 & チュートリアル) */
+/* 3. 「公演」画面（3列レイアウト） */
+.stage-3col-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 15px;
+  align-items: start;
+}
+
+.stage-col {
+  min-height: 500px;
+}
+
+.stage-sub-section {
+  margin-top: 20px;
+  border-top: 1px solid var(--panel-border);
+  padding-top: 15px;
+}
+
+.stage-sub-section h3 {
+  font-size: 0.95rem;
+  color: var(--accent-gold);
+  margin-bottom: 10px;
+}
+
+/* 出演可能キャスト：まとめて取り消しボタン（右下に配置） */
+.stage-hand-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* 上演準備：「現在の幕」ポインタ（←／第◯幕／→） */
+.act-pointer-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.act-pointer-label {
+  font-size: 0.9rem;
+  color: var(--accent-gold);
+  font-weight: bold;
+  white-space: nowrap;
+  min-width: 4.5em;
+  text-align: center;
+}
+
+.act-pointer-controls .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* 予備キャストのカード位置を、公演プランの4列スロットに揃える */
+#stage-reserve-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0 12px;
+}
+
+/* 3.3 上演準備（幕アコーディオン） */
+.acts-list {
+  display: flex;
+  flex-direction: flex-direction;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.act-card {
+  background: var(--select-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.act-header {
+  padding: 10px 14px;
+  background: var(--section-bg);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.act-header:hover {
+  background: var(--section-hover-bg);
+}
+
+.act-title-text {
+  font-size: 0.9rem;
+  color: var(--text-main);
+  font-weight: bold;
+}
+
+.act-body {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.act-body.hidden {
+  display: none;
+}
+
+/* 中央配置レイアウト */
 .config-center-panel, .tutorial-center-panel {
   max-width: 800px;
   margin: 0 auto;
@@ -334,20 +745,19 @@ body {
   padding: 8px 0;
 }
 
-/* キャラクター管理グリッド */
+/* キャラクター管理 */
 .chars-layout-grid {
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 20px;
 }
 
-/* フォーム & カスタムファイル選択ボタン */
 .char-form { display: flex; flex-direction: column; gap: 12px; }
 .form-item { display: flex; flex-direction: column; gap: 4px; }
 .form-item label { font-size: 0.85rem; color: var(--text-sub); }
 
 .input-text, .input-select {
-  background: #0d121a;
+  background: var(--card-bg);
   border: 1px solid var(--panel-border);
   color: var(--text-main);
   padding: 8px 12px;
@@ -356,7 +766,7 @@ body {
 
 .custom-file-upload {
   display: inline-block;
-  background: #0d121a;
+  background: var(--card-bg);
   border: 1px dashed var(--accent-gold);
   color: var(--accent-gold);
   padding: 10px;
@@ -368,7 +778,6 @@ body {
 
 .custom-file-upload input[type="file"] { display: none; }
 
-/* スタイリッシュな所持/未所持切替ボタン */
 .toggle-group {
   display: flex;
   gap: 10px;
@@ -377,7 +786,7 @@ body {
 .toggle-btn {
   flex: 1;
   padding: 8px;
-  background: #0d121a;
+  background: var(--card-bg);
   border: 1px solid var(--panel-border);
   color: var(--text-sub);
   border-radius: 4px;
@@ -387,18 +796,18 @@ body {
 }
 
 .toggle-btn.active-owned {
-  background: rgba(229, 184, 105, 0.2);
+  background: var(--soft-gold-bg);
   border-color: var(--accent-gold);
   color: var(--accent-gold);
 }
 
 .toggle-btn.active-unowned {
-  background: rgba(239, 68, 68, 0.2);
+  background: var(--soft-danger-bg);
   border-color: var(--danger-color);
   color: var(--danger-color);
 }
 
-/* ボタン類 */
+/* ボタン */
 .btn {
   padding: 8px 14px;
   border-radius: 4px;
@@ -407,10 +816,10 @@ body {
   font-weight: bold;
   transition: all 0.2s ease;
 }
-.btn-primary { background: var(--accent-gold); color: #000; }
+.btn-primary { background: var(--accent-gold); color: var(--text-on-accent); }
 .btn-primary:hover { background: var(--accent-gold-hover); }
 .btn-secondary { background: var(--panel-border); color: var(--text-main); }
-.btn-danger { background: var(--danger-color); color: #fff; }
+.btn-danger { background: var(--danger-color); color: var(--text-on-danger); }
 .btn-sm { padding: 4px 8px; font-size: 0.8rem; }
 .btn-block { width: 100%; }
 
@@ -422,20 +831,20 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: #0d121a;
+  background: var(--card-bg);
   border: 1px solid var(--panel-border);
   color: var(--text-main);
   border-radius: 4px;
   cursor: pointer;
 }
 .elem-btn-icon { width: 18px; height: 18px; object-fit: contain; }
-.elem-btn.active { border-color: var(--accent-gold); background: rgba(229, 184, 105, 0.2); }
+.elem-btn.active { border-color: var(--accent-gold); background: var(--soft-gold-bg); }
 
-/* モーダル表示 */
+/* モーダル */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--dark-overlay);
   display: flex; justify-content: center; align-items: center;
   z-index: 1000;
 }
@@ -470,6 +879,22 @@ body {
   gap: 12px;
 }
 
+/* 出演可能キャストのクリックメニュー：キャラカード＋ボタンを縦に並べる */
+.hand-action-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.hand-action-panel .char-card {
+  cursor: default;
+}
+.hand-action-panel .help-text {
+  text-align: center;
+  margin-bottom: 0;
+}
+
 .btn-close {
   background: none;
   border: none;
@@ -478,7 +903,7 @@ body {
   cursor: pointer;
 }
 
-/* チュートリアル用装飾 */
+/* チュートリアル */
 .tutorial-lead { font-size: 0.95rem; color: var(--text-sub); margin-bottom: 15px; }
 .divider { border: none; border-top: 1px solid var(--panel-border); margin: 15px 0; }
 .tutorial-center-panel h3 { color: var(--accent-gold); margin: 15px 0 8px 0; }
@@ -497,13 +922,13 @@ body {
   font-size: 0.85rem;
 }
 
-.tutorial-table th { background: #111723; color: var(--accent-gold); }
+  .tutorial-table th { background: var(--deep-panel-bg); color: var(--accent-gold); }
 
-/* ヘッダータイトルとアイコンの整列 */
 .header-title-group {
   display: flex;
-  align-items: center; /* 上下の中央に揃える */
-  gap: 12px;  /* アイコンと文字の間のすき間 */
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
 }
 
 .header-icon {
@@ -512,15 +937,34 @@ body {
   object-fit: contain;
 }
 
-/* bookアイコンの練習 */
-h2:has(.heading-icon) {  /* クラス名を入力 */
+h2:has(.heading-icon) {
   display: flex !important;
-  align-items: center; /* 上下の中央に揃える */
-  gap: 8px;  /* アイコンと文字の間のすき間 */
+  align-items: center;
+  gap: 8px;
 }
 
-.heading-icon { /* クラス名 */
+.heading-icon {
   width: 40px !important;
   height: 40px !important;
   object-fit: contain;
+}
+
+.title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--accent-gold);
+  text-align: center;
+}
+
+.title-screen img {
+  width: 160px;
+  height: 160px;
+  object-fit: contain;
+}
+
+body:has(#tab-title.active) .site-disclaimer {
+  margin-top: 16vh;
 }
