@@ -622,6 +622,10 @@ body {
   align-items: start;
 }
 
+.stage-mobile-nav {
+  display: none;
+}
+
 .stage-col {
   min-height: 500px;
 }
@@ -677,7 +681,6 @@ body {
 /* 3.3 上演準備（幕アコーディオン） */
 .acts-list {
   display: flex;
-  flex-direction: flex-direction;
   flex-direction: column;
   gap: 10px;
 }
@@ -967,4 +970,415 @@ h2:has(.heading-icon) {
 
 body:has(#tab-title.active) .site-disclaimer {
   margin-top: 16vh;
+}
+
+/* レスポンシブ調整。既存のPCレイアウトとカード寸法は維持する。 */
+@media (max-width: 1100px) {
+  body {
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  .app-header {
+    width: calc(100% + 32px);
+    margin-top: -16px;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .header-left-group {
+    gap: 16px;
+  }
+
+  .main-layout-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(330px, 0.9fr);
+    gap: 14px;
+  }
+
+  .stage-3col-grid {
+    grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1fr) minmax(320px, 1.1fr);
+    gap: 12px;
+    max-width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .card-panel {
+    padding: 16px;
+  }
+
+  .chars-layout-grid {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .set-slots,
+  #stage-reserve-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .set-slot-item {
+    min-width: 0;
+  }
+
+  .set-slot-item .party-slot,
+  .act-body .party-slot {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 110 / 140;
+  }
+
+  .set-slot-item .party-slot img.avatar,
+  .act-body .party-slot img.avatar {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .act-body {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .filter-bar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 767px) {
+  body {
+    padding: 10px;
+    overflow-x: hidden;
+  }
+
+  .app-header {
+    width: calc(100% + 20px);
+    margin-top: -10px;
+    margin-left: -10px;
+    margin-right: -10px;
+    padding: 12px 10px 10px;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .header-left-group {
+    width: 100%;
+    display: contents;
+  }
+
+  .header-title-group {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .header-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .app-header h1 {
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+
+  .tab-nav {
+    order: 3;
+    width: 100%;
+    gap: 18px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .tab-nav .tab-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .header-right-group {
+    margin-left: auto;
+    gap: 8px;
+  }
+
+  .difficulty-label {
+    font-size: 0.75rem;
+    padding: 5px 8px;
+  }
+
+  .tab-icon-img {
+    width: 34px;
+    height: 34px;
+  }
+
+  .card-panel {
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+
+  .panel-header {
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .panel-header h2,
+  .title-with-count h2 {
+    font-size: 1.05rem;
+  }
+
+  .heading-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .header-actions,
+  .filter-bar {
+    gap: 5px;
+  }
+
+  .header-actions {
+    justify-content: flex-end;
+  }
+
+  .btn {
+    padding: 7px 10px;
+  }
+
+  .btn-sm {
+    padding: 4px 7px;
+  }
+
+  .main-layout-grid,
+  .chars-layout-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .main-layout-grid > .card-panel:first-child {
+    order: 1;
+  }
+
+  .main-layout-grid > .card-panel:last-child {
+    order: 2;
+  }
+
+  .chars-layout-grid .cast-grid,
+  #stage-hand-container,
+  #stage-hand-performed-container {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    justify-items: stretch;
+  }
+
+  .chars-layout-grid .char-card,
+  #stage-hand-container .char-card,
+  #stage-hand-performed-container .char-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 110 / 140;
+  }
+
+  .chars-layout-grid .char-card img.avatar,
+  #stage-hand-container .char-card img.avatar,
+  #stage-hand-performed-container .char-card img.avatar {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .set-card {
+    overflow-x: auto;
+  }
+
+  .stage-3col-grid {
+    width: 100%;
+    max-width: none;
+    display: block;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .stage-col {
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    display: none;
+    width: 100%;
+  }
+
+  .stage-col.stage-panel-active {
+    display: block;
+  }
+
+  .stage-mobile-nav {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .stage-mobile-nav-btn {
+    min-width: 0;
+    padding: 8px 4px;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    background: var(--panel-bg);
+    color: var(--text-sub);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: bold;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+
+  .stage-mobile-nav-btn.active {
+    border-color: var(--accent-gold);
+    background: var(--soft-gold-bg);
+    color: var(--accent-gold);
+  }
+
+  .stage-col .set-slots,
+  .stage-col #stage-reserve-container {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    margin: 0;
+  }
+
+  .stage-col .act-body {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .stage-col .party-slot {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 110 / 140;
+  }
+
+  .stage-col .party-slot img.avatar {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .stage-col .party-slot .name-label {
+    height: 24px;
+    font-size: 0.62rem;
+  }
+
+  .stage-col .panel-header {
+    align-items: center;
+  }
+
+  .config-center-panel,
+  .tutorial-center-panel {
+    max-width: none;
+  }
+
+  .party-row {
+    margin-right: -4px;
+    padding-right: 4px;
+  }
+
+  .party-row .party-slot {
+    flex: 0 0 calc((100% - 36px) / 4);
+    width: calc((100% - 36px) / 4);
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 110 / 140;
+  }
+
+  .party-row .party-slot img.avatar {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .element-btn-group {
+    gap: 6px;
+  }
+
+  .elem-btn {
+    padding: 6px 9px;
+  }
+
+  .tutorial-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .tutorial-table th,
+  .tutorial-table td {
+    padding: 7px 9px;
+  }
+
+  .modal-window {
+    width: calc(100% - 20px);
+    max-width: none;
+    max-height: 88vh;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 12px;
+  }
+
+  .modal-body {
+    justify-content: center;
+  }
+
+  .site-disclaimer {
+    text-align: left;
+    font-size: 0.6rem;
+  }
+}
+
+
+/* 公演画面：出演可能キャスト／出演済みキャストは4列固定。
+   PCの既存カードサイズ・上演準備の110×140は変更しない。 */
+@media (max-width: 1100px) {
+  #stage-hand-container,
+  #stage-hand-performed-container {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+  }
+
+  #stage-hand-container .char-card,
+  #stage-hand-performed-container .char-card {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    height: auto !important;
+    aspect-ratio: 110 / 140 !important;
+  }
+
+  #stage-hand-container .char-card img.avatar,
+  #stage-hand-performed-container .char-card img.avatar {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  #stage-hand-container,
+  #stage-hand-performed-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
 }
