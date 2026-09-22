@@ -1,4 +1,4 @@
-const STORAGE_PREFIX = 'genshin_ver_21';
+const STORAGE_PREFIX = 'genshin_ver_23';
 
 const DEFAULT_CHARACTERS = [
   { id: "c3", name: "ウェンティ", rarity: 5, element: "anemo", image: "003_ウェンティ.webp", owned: false },
@@ -1725,7 +1725,8 @@ window.openSlotSelectModal = function(setIdx, slotIdx) {
   document.getElementById('modal-title').innerText = "枠にセットするキャラクターを選択";
 
   const assignedIds = sets.flatMap(s => s.slots.map(sl => sl.charId)).filter(Boolean);
-  const available = characters.filter(c => c.owned || c.id === currentSettings.supportCast);
+  const todayCastIds = getTodayCastIds();
+  const available = characters.filter(c => todayCastIds.includes(c.id));
   const currentSlotCharId = sets[setIdx].slots[slotIdx].charId;
 
   body.innerHTML = `
