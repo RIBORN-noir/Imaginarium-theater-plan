@@ -85,7 +85,7 @@ const DEFAULT_CHARACTERS = [
   { id: "c84", name: "シグウィン", rarity: 5, element: "hydro", image: "084_シグウィン.webp", owned: false },
   { id: "c85", name: "セトス", rarity: 4, element: "electro", image: "085_セトス.webp", owned: true },
   { id: "c86", name: "エミリエ", rarity: 5, element: "dendro", image: "086_エミリエ.webp", owned: false },
-  { id: "c87", name: "ムアラニ", rarity: 5, element: "hydro", image: "087_ムアラニ.webp", owned: true },
+  { id: "c87", name: "ムアラニ", rarity: 5, element: "hydro", image: "087_ムアラニ.webp", owned: false },
   { id: "c88", name: "カチーナ", rarity: 4, element: "geo", image: "088_カチーナ.webp", owned: true },
   { id: "c89", name: "キィニチ", rarity: 5, element: "dendro", image: "089_キィニチ.webp", owned: true },
   { id: "c90", name: "シロネン", rarity: 5, element: "geo", image: "090_シロネン.webp", owned: true },
@@ -121,6 +121,8 @@ const DEFAULT_CHARACTERS = [
   { id: "c120", name: "アリョーシャ", rarity: 4, element: "electro", image: "120_アリョーシャ.webp", owned: true },
   { id: "c121", name: "ヴォジャニーツァ", rarity: 5, element: "hydro", image: "121_ヴォジャニーツァ.webp", owned: false },
   { id: "c122", name: "ヴェスナ", rarity: 5, element: "anemo", image: "122_ヴェスナ.webp", owned: false },
+  { id: "c123", name: "ミティヤ", rarity: 5, element: "electro", image: "123_ミティヤ.webp", owned: false },
+  { id: "c124", name: "バレリー", rarity: 4, element: "electro", image: "124_バレリー.webp", owned: false },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -170,7 +172,7 @@ function normalizeCurrentCastSelections() {
   currentSettings.openingCast = dedupe(currentSettings.openingCast);
   currentSettings.specialCast = dedupe(currentSettings.specialCast);
 
-  if (currentSettings.supportCast && seen.has(currentSettings.supportCast)) {
+  if (currentSettings.supportCast && currentSettings.openingCast.includes(currentSettings.supportCast)) {
     currentSettings.supportCast = null;
   } else if (currentSettings.supportCast) {
     seen.add(currentSettings.supportCast);
@@ -239,6 +241,13 @@ function clampActPointer() {
   const maxPointer = stageActs.length + 1; // 幕数+1 = 全幕クリア状態
   if (currentActPointer < 1) currentActPointer = 1;
   if (currentActPointer > maxPointer) currentActPointer = maxPointer;
+}
+
+function getRewindTargetPointer() {
+  const clearedActCount = currentActPointer - 1;
+  if (clearedActCount > 6) return 7;
+  if (clearedActCount > 3) return 4;
+  return currentActPointer;
 }
 
 // 難易度ごとの基本幕数（チュートリアル記載の値）
@@ -1152,6 +1161,28 @@ function initStageTab() {
   // 上演準備の「現在の幕」ポインタ（時間移動）
   const btnActPrev = document.getElementById('btn-act-prev');
   const btnActNext = document.getElementById('btn-act-next');
+  const btnActRewind = document.getElementById('btn-act-rewind');
+  const btnResetStage = document.getElementById('btn-reset-stage');
+  if (btnActRewind) {
+    btnActRewind.addEventListener('click', () => {
+      const rewindTarget = getRewindTargetPointer();
+      if (rewindTarget !== currentActPointer) {
+        currentActPointer = rewindTarget;
+        saveData();
+      }
+    });
+  }
+  if (btnResetStage) {
+    btnResetStage.addEventListener('click', () => {
+      if (!confirm('上演準備の配置と手札を初期状態にリセットしますか？')) return;
+      const todayCastIds = getTodayCastIds();
+      stageActs = stageActs.map(act => ({ ...act, slots: act.slots.map(() => null) }));
+      stageHand = currentSettings.openingCast.filter(id => id && todayCastIds.includes(id));
+      currentActPointer = 1;
+      saveData();
+    });
+  }
+
   if (btnActPrev) {
     btnActPrev.addEventListener('click', () => {
       currentActPointer -= 1;
@@ -1262,8 +1293,10 @@ function renderStageTab() {
     }
     const btnPrev = document.getElementById('btn-act-prev');
     const btnNext = document.getElementById('btn-act-next');
+    const btnRewind = document.getElementById('btn-act-rewind');
     if (btnPrev) btnPrev.disabled = currentActPointer <= 1;
     if (btnNext) btnNext.disabled = currentActPointer >= maxPointer;
+    if (btnRewind) btnRewind.disabled = getRewindTargetPointer() === currentActPointer;
   }
 
   const todayCastIds = getTodayCastIds();
@@ -1703,8 +1736,11 @@ window.openCastSelectModal = function(type, targetIndex) {
     selectedId = currentSettings.supportCast;
     candidates = characters.filter(c => {
       if (c.id === selectedId) return true;
-      if (c.owned || !currentSettings.activeElements.includes(c.element)) return false;
-      return !chosenIds.has(c.id);
+      if (c.owned) return false;
+      const isSpecialCast = currentSettings.specialCast.includes(c.id);
+      if (!isSpecialCast && !currentSettings.activeElements.includes(c.element)) return false;
+      if (currentSettings.openingCast.includes(c.id)) return false;
+      return isSpecialCast || !chosenIds.has(c.id);
     });
   }
 
@@ -1762,7 +1798,10 @@ window.selectModalChar = function(type, targetIndex, charId) {
     ...(currentSettings.supportCast ? [currentSettings.supportCast] : [])
   ]);
 
-  if (selectedIds.has(charId) && charId !== currentSelected) {
+  const canReuseSpecialCastForSupport = type === 'support'
+    && currentSettings.specialCast.includes(charId)
+    && !currentSettings.openingCast.includes(charId);
+  if (selectedIds.has(charId) && charId !== currentSelected && !canReuseSpecialCastForSupport) {
     document.getElementById('modal-overlay').classList.add('hidden');
     return;
   }
