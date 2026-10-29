@@ -190,6 +190,11 @@ body {
   align-self: stretch;
 }
 
+.header-right-group .icon-btn[data-tab="tab-chars"] {
+  opacity: 1;
+  filter: none;
+}
+
 .header-right-group .icon-btn.active::after {
   content: "";
   position: absolute;
@@ -512,6 +517,12 @@ body {
   filter: grayscale(100%);
 }
 
+#char-management-list .char-card,
+#char-management-list .char-card > * {
+  opacity: 1;
+  filter: none;
+}
+
 /* パーティ・セット枠 */
 .sets-list {
   display: flex;
@@ -541,10 +552,19 @@ body {
 .set-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
 }
 
+.set-header-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
 .set-header input {
+  min-width: 0;
+  flex: 1;
   background: transparent;
   border: none;
   color: var(--accent-gold);
@@ -652,8 +672,16 @@ body {
 /* 上演準備：「現在の幕」ポインタ（←／第◯幕／→） */
 .act-pointer-controls {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
+}
+
+.stage-reset-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 12px 0 8px;
 }
 
 .act-pointer-label {
@@ -710,6 +738,12 @@ body {
   font-size: 0.9rem;
   color: var(--text-main);
   font-weight: bold;
+}
+
+.act-header .act-title-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .act-body {
@@ -864,6 +898,11 @@ body {
   flex-direction: column;
 }
 
+.modal-window.character-select-modal {
+  width: 780px;
+  max-width: calc(100vw - 32px);
+}
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -880,6 +919,54 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.modal-window.character-select-modal .modal-body {
+  display: grid;
+  grid-template-columns: repeat(6, 110px);
+  justify-content: start;
+  align-content: start;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.modal-window.multi-select-modal .modal-body {
+  grid-template-columns: repeat(6, 110px);
+}
+
+.multi-select-card .team-selection-order {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 4;
+  display: none;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  color: var(--text-on-accent);
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.multi-select-card.active-selected .team-selection-order {
+  display: flex;
+}
+
+.team-selection-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.team-selection-count {
+  color: var(--text-sub);
+  font-size: 0.9rem;
 }
 
 /* 出演可能キャストのクリックメニュー：キャラカード＋ボタンを縦に並べる */
