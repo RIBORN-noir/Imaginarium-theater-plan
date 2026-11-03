@@ -119,10 +119,10 @@ const DEFAULT_CHARACTERS = [
   { id: "c118", name: "サンドローネ", rarity: 5, element: "cryo", image: "118_サンドローネ.webp", owned: true },
   { id: "c119", name: "オデット", rarity: 5, element: "cryo", image: "119_オデット.webp", owned: true },
   { id: "c120", name: "アリョーシャ", rarity: 4, element: "electro", image: "120_アリョーシャ.webp", owned: true },
-  { id: "c121", name: "ヴォジャニーツァ", rarity: 5, element: "hydro", image: "121_ヴォジャニーツァ.webp", owned: false },
-  { id: "c122", name: "ヴェスナ", rarity: 5, element: "anemo", image: "122_ヴェスナ.webp", owned: false },
-  { id: "c123", name: "ミティヤ", rarity: 5, element: "electro", image: "123_ミティヤ.webp", owned: false },
-  { id: "c124", name: "バレリー", rarity: 4, element: "electro", image: "124_バレリー.webp", owned: false },
+  { id: "c121", name: "ヴェスナ", rarity: 5, element: "anemo", image: "121_ヴェスナ.webp", owned: false },
+  { id: "c122", name: "ヴォジャニーツァ", rarity: 5, element: "hydro", image: "122_ヴォジャニーツァ.webp", owned: false },
+  { id: "c123", name: "ミティヤ", rarity: 5, element: "electro", image: "123_ミティヤ.webp", owned: true },
+  { id: "c124", name: "バレリー", rarity: 4, element: "electro", image: "124_バレリー.webp", owned: true },
 ];
 
 const DEFAULT_SETTINGS = {
@@ -153,7 +153,54 @@ const CONFIG_RULES = {
   ]
 };
 
-let characters = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}chars`)) || DEFAULT_CHARACTERS;
+const storedCharacters = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}chars`));
+const ownershipStorageKey = `${STORAGE_PREFIX}default_owned`;
+const storedDefaultOwnership = JSON.parse(localStorage.getItem(ownershipStorageKey) || 'null');
+const storedCharactersById = new Map(
+  (Array.isArray(storedCharacters) ? storedCharacters : [])
+    .filter(character => character && character.id)
+    .map(character => [character.id, character])
+);
+const defaultCharacterIds = new Set(DEFAULT_CHARACTERS.map(character => character.id));
+const defaultOwnership = Object.fromEntries(
+  DEFAULT_CHARACTERS.map(character => [character.id, character.owned])
+);
+let characters = DEFAULT_CHARACTERS.map(character => {
+  const storedCharacter = storedCharactersById.get(character.id);
+  const hasUserOwnershipOverride = storedDefaultOwnership &&
+    storedCharacter &&
+    storedCharacter.owned !== storedDefaultOwnership[character.id];
+  return {
+    ...character,
+    ...(storedCharacter || {}),
+    owned: hasUserOwnershipOverride ? storedCharacter.owned : character.owned
+  };
+});
+if (Array.isArray(storedCharacters)) {
+  characters.push(...storedCharacters.filter(character =>
+    character && character.id && !defaultCharacterIds.has(character.id)
+  ));
+
+  const needsCharacterSync = DEFAULT_CHARACTERS.some(character => {
+    const stored = storedCharactersById.get(character.id);
+    if (!stored) return true;
+    const hasUserOverride = storedDefaultOwnership &&
+      stored.owned !== storedDefaultOwnership[character.id];
+    return !hasUserOverride && stored.owned !== character.owned;
+  });
+  if (needsCharacterSync) {
+    try {
+      localStorage.setItem(`${STORAGE_PREFIX}chars`, JSON.stringify(characters));
+    } catch (error) {
+      console.error('標準キャラクターの情報を保存済みデータに同期できませんでした:', error);
+    }
+  }
+}
+try {
+  localStorage.setItem(ownershipStorageKey, JSON.stringify(defaultOwnership));
+} catch (error) {
+  console.error('標準キャラクターの所持状態を保存できませんでした:', error);
+}
 let currentSettings = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}settings`)) || JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 if (!currentSettings.rejectedCast) { currentSettings.rejectedCast = []; }
 
@@ -336,6 +383,7 @@ function initTabs() {
 
 function getImgSrc(filename) {
   if (!filename || filename.trim() === '') return './assets/ui/placeholder.png';
+  if (filename.startsWith('data:image/')) return filename;
   return `./assets/characters/${filename}`;
 }
 
@@ -386,30 +434,38 @@ function initCharManagement() {
   const fileInput = document.getElementById('add-char-file-input');
   const fileLabel = document.getElementById('add-char-file-label');
   const imageNameInput = document.getElementById('add-char-image-name');
+  let selectedImageFile = null;
 
   fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      const name = e.target.files[0].name;
+    selectedImageFile = e.target.files[0] || null;
+    if (selectedImageFile) {
+      const name = selectedImageFile.name;
       fileLabel.innerText = `選択済: ${name}`;
-      imageNameInput.value = name;
     }
   });
 
-  document.getElementById('form-add-char').addEventListener('submit', (e) => {
+  document.getElementById('form-add-char').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const newChar = {
-      id: 'char_' + Date.now(),
-      name: document.getElementById('add-char-name').value,
-      rarity: parseInt(document.getElementById('add-char-rarity').value),
-      element: document.getElementById('add-char-element').value,
-      image: imageNameInput.value || '',
-      owned: true
-    };
-    characters.push(newChar);
-    e.target.reset();
-    fileLabel.innerText = "＋ 画像を選択";
-    imageNameInput.value = '';
-    saveData();
+    try {
+      const image = selectedImageFile ? await imageFileToDataUrl(selectedImageFile) : '';
+      const newChar = {
+        id: 'char_' + Date.now(),
+        name: document.getElementById('add-char-name').value,
+        rarity: parseInt(document.getElementById('add-char-rarity').value),
+        element: document.getElementById('add-char-element').value,
+        image,
+        owned: true
+      };
+      characters.push(newChar);
+      e.target.reset();
+      selectedImageFile = null;
+      fileLabel.innerText = "＋ 画像を選択";
+      imageNameInput.value = '';
+      saveData();
+    } catch (error) {
+      console.error('キャラクター画像を登録できませんでした:', error);
+      alert('画像の読み込みまたは保存に失敗しました。形式・サイズ（20MB以下）・ブラウザーの保存容量を確認してください。');
+    }
   });
 
   ['filter-element', 'filter-ownership', 'filter-rarity'].forEach(id => {
@@ -417,13 +473,34 @@ function initCharManagement() {
   });
 }
 
+async function imageFileToDataUrl(file) {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('選択したファイルは画像ではありません。');
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    throw new Error('画像ファイルが20MBを超えています。');
+  }
+
+  const image = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('画像を処理できません。');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/webp', 0.82);
+  } finally {
+    image.close();
+  }
+}
+
 function renderCharManagement() {
   const container = document.getElementById('char-management-list');
   const elemF = document.getElementById('filter-element').value;
   const ownF = document.getElementById('filter-ownership').value;
   const rarF = document.getElementById('filter-rarity').value;
-  const assignedIds = sets.flatMap(set => set.slots.map(slot => slot.charId)).filter(Boolean);
-
   const filtered = characters.filter(c => {
     if (elemF !== 'all' && c.element !== elemF) return false;
     if (ownF === 'owned' && !c.owned) return false;
@@ -433,12 +510,18 @@ function renderCharManagement() {
   });
 
   container.innerHTML = filtered.map(c => `
-    <div class="char-card star-${c.rarity} ${assignedIds.includes(c.id) ? 'assigned' : ''}" onclick="openEditModal('${c.id}')">
+    <div class="char-card star-${c.rarity}" onclick="openEditModal('${c.id}')">
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
       <img src="${getImgSrc(c.image)}" class="avatar">
       <div class="name-label">${c.name}</div>
     </div>
   `).join('');
+}
+
+function setCharacterSelectModalLayout(enabled, multiSelect = false) {
+  const modalWindow = document.querySelector('#modal-overlay .modal-window');
+  modalWindow.classList.toggle('character-select-modal', enabled);
+  modalWindow.classList.toggle('multi-select-modal', multiSelect);
 }
 
 window.openEditModal = function(id) {
@@ -447,6 +530,7 @@ window.openEditModal = function(id) {
 
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(false);
   document.getElementById('modal-title').innerText = "キャラクター編集";
 
   body.innerHTML = `
@@ -474,9 +558,10 @@ window.openEditModal = function(id) {
         <label>画像ファイル</label>
         <label class="custom-file-upload">
           <input type="file" id="edit-char-file-input" accept="image/*">
-          <span id="edit-char-file-label">${c.image ? '変更: ' + c.image : '＋ 画像を選択'}</span>
+          <span id="edit-char-file-label">${c.image ? '登録済み（変更できます）' : '＋ 画像を選択'}</span>
         </label>
         <input type="hidden" id="edit-char-image-name" value="${c.image || ''}">
+        <small class="help-text">画像はこのブラウザーに保存されます（長辺512pxに縮小）。</small>
       </div>
       <div class="form-item">
         <label>所持状態</label>
@@ -506,23 +591,32 @@ window.openEditModal = function(id) {
     btnUnowned.className = 'toggle-btn active-unowned';
   });
 
+  let selectedImageFile = null;
   document.getElementById('edit-char-file-input').addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      const name = e.target.files[0].name;
+    selectedImageFile = e.target.files[0] || null;
+    if (selectedImageFile) {
+      const name = selectedImageFile.name;
       document.getElementById('edit-char-file-label').innerText = `変更: ${name}`;
-      document.getElementById('edit-char-image-name').value = name;
     }
   });
 
-  document.getElementById('form-edit-char').addEventListener('submit', (e) => {
+  document.getElementById('form-edit-char').addEventListener('submit', async (e) => {
     e.preventDefault();
-    c.name = document.getElementById('edit-char-name').value;
-    c.rarity = parseInt(document.getElementById('edit-char-rarity').value);
-    c.element = document.getElementById('edit-char-element').value;
-    c.image = document.getElementById('edit-char-image-name').value;
-    c.owned = currentOwned;
-    overlay.classList.add('hidden');
-    saveData();
+    try {
+      const image = selectedImageFile
+        ? await imageFileToDataUrl(selectedImageFile)
+        : document.getElementById('edit-char-image-name').value;
+      c.name = document.getElementById('edit-char-name').value;
+      c.rarity = parseInt(document.getElementById('edit-char-rarity').value);
+      c.element = document.getElementById('edit-char-element').value;
+      c.image = image;
+      c.owned = currentOwned;
+      overlay.classList.add('hidden');
+      saveData();
+    } catch (error) {
+      console.error('キャラクター画像を更新できませんでした:', error);
+      alert('画像の読み込みまたは保存に失敗しました。形式・サイズ（20MB以下）・ブラウザーの保存容量を確認してください。');
+    }
   });
 
   overlay.classList.remove('hidden');
@@ -627,6 +721,8 @@ let restoreMode = false;
 let selectedForRestore = new Set();
 // 折りたたみ状態（特別招待／開幕／待機／不採用）
 let collapsedGroups = new Set();
+let teamSelectionContext = null;
+let selectedTeamCharIds = [];
 
 window.toggleCollapseGroup = function(key) {
   if (collapsedGroups.has(key)) {
@@ -876,7 +972,10 @@ function renderSets() {
     <div class="set-card" draggable="true" data-set-index="${setIndex}">
       <div class="set-header">
         <input type="text" value="${s.name}" onchange="updateSetName(${setIndex}, this.value)">
-        <button class="btn btn-danger btn-sm" onclick="removeSet(${setIndex})">削除</button>
+        <div class="set-header-actions">
+          <button class="btn btn-secondary btn-sm" onclick="openTeamSelectionModal('set', ${setIndex})">選択</button>
+          <button class="btn btn-danger btn-sm" onclick="removeSet(${setIndex})">削除</button>
+        </div>
       </div>
       <div class="set-slots">
         ${s.slots.map((slot, slotIndex) => {
@@ -1437,6 +1536,7 @@ function renderStageTab() {
       <div class="act-card">
         <div class="act-header" onclick="toggleActOpen(${actIdx})">
           <span class="act-title-text">${summaryText}</span>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openTeamSelectionModal('act', ${actIdx})">選択</button>
         </div>
         <div class="act-body ${act.isOpen ? '' : 'hidden'}">
           ${act.slots.map((charId, slotIdx) => {
@@ -1475,6 +1575,7 @@ window.toggleActOpen = function(actIdx) {
 window.openActSlotSelectModal = function(actIdx, slotIdx) {
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true);
   document.getElementById('modal-title').innerText = "枠にセットするキャラクターを選択";
 
   const todayCastIds = getTodayCastIds();
@@ -1591,6 +1692,7 @@ function setupStageDragAndDrop() {
 function openAddHandModal() {
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true);
   document.getElementById('modal-title').innerText = "手札（出演可能キャスト）へ追加";
 
   const todayCastIds = getTodayCastIds();
@@ -1626,6 +1728,7 @@ window.addHandChar = function(charId) {
 function openRemoveHandModal() {
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true);
   document.getElementById('modal-title').innerText = "手札からまとめて取り消し";
 
   const candidates = stageHand
@@ -1662,6 +1765,7 @@ window.openHandCardActionModal = function(charId) {
   const body = document.getElementById('modal-body');
   const c = characters.find(ch => ch.id === charId);
   if (!c) return;
+  setCharacterSelectModalLayout(false);
 
   document.getElementById('modal-title').innerText = c.name;
 
@@ -1708,6 +1812,7 @@ window.removeFromHandAction = function(charId) {
 window.openCastSelectModal = function(type, targetIndex) {
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true);
   document.getElementById('modal-title').innerText = "キャラクターを選択";
   let candidates = [];
   let selectedId = null;
@@ -1755,9 +1860,111 @@ window.openCastSelectModal = function(type, targetIndex) {
   overlay.classList.remove('hidden');
 };
 
+window.openTeamSelectionModal = function(type, targetIndex) {
+  const target = type === 'set' ? sets[targetIndex] : stageActs[targetIndex];
+  if (!target) return;
+
+  const todayCastIds = new Set(getTodayCastIds());
+  const currentCharIds = target.slots.map(slot => type === 'set' ? slot.charId : slot);
+  const currentCharIdSet = new Set(currentCharIds.filter(Boolean));
+  const vitalityMap = type === 'act' ? calculateVitality() : {};
+
+  let assignedElsewhere = new Set();
+  if (type === 'set') {
+    assignedElsewhere = new Set(
+      sets.flatMap((set, setIdx) => setIdx === targetIndex ? [] : set.slots.map(slot => slot.charId)).filter(Boolean)
+    );
+  }
+
+  const allowedCharIds = new Set(characters
+    .filter(char => {
+      if (!todayCastIds.has(char.id)) return false;
+      if (currentCharIdSet.has(char.id)) return true;
+      if (type === 'set') return !assignedElsewhere.has(char.id);
+      return (vitalityMap[char.id] || 0) < 2;
+    })
+    .map(char => char.id));
+
+  teamSelectionContext = { type, targetIndex, slotCount: target.slots.length, allowedCharIds };
+  selectedTeamCharIds = [...new Set(currentCharIds.filter(charId => charId && allowedCharIds.has(charId)))];
+
+  const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true, true);
+  document.getElementById('modal-title').innerText = `${target.name}の編成を選択`;
+  body.innerHTML = characters
+    .filter(char => todayCastIds.has(char.id))
+    .map(char => {
+      const selectedIndex = selectedTeamCharIds.indexOf(char.id);
+      const isSelected = selectedIndex !== -1;
+      const isUnavailable = !allowedCharIds.has(char.id);
+      return `
+        <div class="char-card multi-select-card star-${char.rarity} ${isSelected ? 'active-selected' : ''} ${isUnavailable ? 'assigned' : ''}"
+             data-char-id="${char.id}"
+             ${isUnavailable ? '' : `onclick="toggleTeamSelectionChar('${char.id}')"`}>
+          <span class="team-selection-order">${isSelected ? selectedIndex + 1 : ''}</span>
+          <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
+          <img src="${getImgSrc(char.image)}" class="avatar">
+          <div class="name-label">${char.name}</div>
+        </div>
+      `;
+    }).join('') + `
+    <div class="team-selection-actions">
+      <span class="team-selection-count" id="team-selection-count"></span>
+      <button class="btn btn-primary" onclick="confirmTeamSelection()">登録</button>
+    </div>
+  `;
+  updateTeamSelectionCount();
+  document.getElementById('modal-overlay').classList.remove('hidden');
+};
+
+window.toggleTeamSelectionChar = function(charId) {
+  if (!teamSelectionContext || !teamSelectionContext.allowedCharIds.has(charId)) return;
+
+  const selectedIndex = selectedTeamCharIds.indexOf(charId);
+  if (selectedIndex !== -1) {
+    selectedTeamCharIds.splice(selectedIndex, 1);
+  } else if (selectedTeamCharIds.length < teamSelectionContext.slotCount) {
+    selectedTeamCharIds.push(charId);
+  }
+
+  document.querySelectorAll('#modal-body .multi-select-card').forEach(card => {
+    const order = selectedTeamCharIds.indexOf(card.dataset.charId);
+    card.classList.toggle('active-selected', order !== -1);
+    card.querySelector('.team-selection-order').textContent = order === -1 ? '' : String(order + 1);
+  });
+  updateTeamSelectionCount();
+};
+
+function updateTeamSelectionCount() {
+  if (!teamSelectionContext) return;
+  const count = document.getElementById('team-selection-count');
+  if (count) count.textContent = `${selectedTeamCharIds.length} / ${teamSelectionContext.slotCount}人`;
+}
+
+window.confirmTeamSelection = function() {
+  if (!teamSelectionContext) return;
+  const { type, targetIndex, slotCount } = teamSelectionContext;
+  const selectedIds = selectedTeamCharIds.slice(0, slotCount);
+
+  if (type === 'set') {
+    sets[targetIndex].slots.forEach((slot, index) => {
+      slot.charId = selectedIds[index] || null;
+    });
+  } else {
+    stageActs[targetIndex].slots = Array.from({ length: slotCount }, (_, index) => selectedIds[index] || null);
+  }
+
+  teamSelectionContext = null;
+  selectedTeamCharIds = [];
+  document.getElementById('modal-overlay').classList.add('hidden');
+  setCharacterSelectModalLayout(false);
+  saveData();
+};
+
 window.openSlotSelectModal = function(setIdx, slotIdx) {
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true);
   document.getElementById('modal-title').innerText = "枠にセットするキャラクターを選択";
 
   const assignedIds = sets.flatMap(s => s.slots.map(sl => sl.charId)).filter(Boolean);
