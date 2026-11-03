@@ -165,14 +165,37 @@ const defaultCharacterIds = new Set(DEFAULT_CHARACTERS.map(character => characte
 const defaultOwnership = Object.fromEntries(
   DEFAULT_CHARACTERS.map(character => [character.id, character.owned])
 );
+const reorderedCharacterIds = new Set(['c121', 'c122']);
+const reorderedCharacterImageNames = new Set([
+  '121_ヴェスナ.webp',
+  '122_ヴォジャニーツァ.webp',
+  '121_ヴォジャニーツァ.webp',
+  '122_ヴェスナ.webp'
+]);
+const reorderedCharacterNames = new Set(['ヴェスナ', 'ヴォジャニーツァ']);
+const hasStaleReorderedIdentity = character =>
+  reorderedCharacterIds.has(character.id) &&
+  reorderedCharacterNames.has(character.name) &&
+  reorderedCharacterImageNames.has(character.image);
+const hasMissingReorderedImage = character =>
+  reorderedCharacterIds.has(character.id) &&
+  (!character.image || !character.image.trim());
 let characters = DEFAULT_CHARACTERS.map(character => {
   const storedCharacter = storedCharactersById.get(character.id);
   const hasUserOwnershipOverride = storedDefaultOwnership &&
     storedCharacter &&
     storedCharacter.owned !== storedDefaultOwnership[character.id];
+  const hasStaleIdentity = storedCharacter && hasStaleReorderedIdentity(storedCharacter);
+  const hasMissingImage = storedCharacter && hasMissingReorderedImage(storedCharacter);
   return {
     ...character,
     ...(storedCharacter || {}),
+    ...(hasStaleIdentity ? {
+      name: character.name,
+      element: character.element,
+      image: character.image
+    } : {}),
+    ...(hasMissingImage ? { image: character.image } : {}),
     owned: hasUserOwnershipOverride ? storedCharacter.owned : character.owned
   };
 });
@@ -186,7 +209,9 @@ if (Array.isArray(storedCharacters)) {
     if (!stored) return true;
     const hasUserOverride = storedDefaultOwnership &&
       stored.owned !== storedDefaultOwnership[character.id];
-    return !hasUserOverride && stored.owned !== character.owned;
+    return hasStaleReorderedIdentity(stored) ||
+      hasMissingReorderedImage(stored) ||
+      (!hasUserOverride && stored.owned !== character.owned);
   });
   if (needsCharacterSync) {
     try {
@@ -386,6 +411,13 @@ function getImgSrc(filename) {
   if (filename.startsWith('data:image/')) return filename;
   return `./assets/characters/${filename}`;
 }
+
+document.addEventListener('error', event => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.classList.contains('avatar') || image.dataset.fallbackApplied) return;
+  image.dataset.fallbackApplied = 'true';
+  image.src = './assets/ui/placeholder.png';
+}, true);
 
 function getElemImgSrc(elemKey) {
   return `./assets/elements/${elemKey}.png`;
