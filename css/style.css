@@ -185,6 +185,26 @@ body {
   opacity: 1;
 }
 
+.data-transfer-btn {
+  color: var(--accent-gold);
+}
+
+.share-icon {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.header-right-group .data-transfer-btn {
+  position: static;
+  align-self: center;
+  padding: 4px;
+}
+
 .header-right-group .icon-btn {
   position: relative;
   align-self: stretch;
@@ -551,9 +571,18 @@ body {
 
 .set-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.set-collapse-toggle {
+  flex: 0 0 auto;
+  padding: 4px 8px 4px 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-gold);
+  font-size: 0.8rem;
+  cursor: pointer;
 }
 
 .set-header-actions {
@@ -576,6 +605,10 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
+}
+
+.set-slots.hidden {
+  display: none;
 }
 
 .set-slot-item {
@@ -612,6 +645,10 @@ body {
   background: var(--slot-bg);
   overflow: hidden;
   transition: all 0.2s ease;
+}
+
+#stage-plan-container .party-slot[draggable="true"] {
+  cursor: grab;
 }
 
 .party-slot:hover {
@@ -919,6 +956,17 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.data-transfer-actions {
+  display: grid;
+  width: 100%;
+  gap: 12px;
+}
+
+#data-transfer-status {
+  min-height: 1.5em;
+  margin: 0;
 }
 
 .modal-window.character-select-modal .modal-body {
