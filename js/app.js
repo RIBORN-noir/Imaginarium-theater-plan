@@ -1,6 +1,8 @@
 const STORAGE_PREFIX = 'genshin_ver_23';
 
 const DEFAULT_CHARACTERS = [
+  { id: "c1", name: "空", rarity: 5, element: null, image: "001_空.png", owned: true },
+  { id: "c2", name: "蛍", rarity: 5, element: null, image: "002_蛍.png", owned: true },
   { id: "c3", name: "ウェンティ", rarity: 5, element: "anemo", image: "003_ウェンティ.webp", owned: false },
   { id: "c4", name: "アンバー", rarity: 4, element: "pyro", image: "004_アンバー.webp", owned: true },
   { id: "c5", name: "ガイア", rarity: 4, element: "cryo", image: "005_ガイア.webp", owned: true },
@@ -432,7 +434,8 @@ function validateImportData(save) {
   if (!importedCharacters.every(character =>
     isRecord(character) && typeof character.id === 'string' && typeof character.name === 'string' &&
     typeof character.image === 'string' && typeof character.owned === 'boolean' &&
-    [4, 5].includes(character.rarity) && Object.hasOwn(CONFIG_RULES.elements, character.element))) {
+    [4, 5].includes(character.rarity) &&
+    (character.element === null || Object.hasOwn(CONFIG_RULES.elements, character.element)))) {
     throw new Error('キャラクターデータの形式が正しくありません。');
   }
   if (!importedSets.every(set =>
@@ -521,7 +524,11 @@ function initDataTransfer() {
       const previousStorage = new Map(storageKeys.map(key => [key, localStorage.getItem(key)]));
       const previousState = { characters, currentSettings, sets, stageHand, stageActs, currentActPointer };
       try {
-        characters = imported.characters;
+        const importedCharacterIds = new Set(imported.characters.map(character => character.id));
+        const missingTravelerCharacters = DEFAULT_CHARACTERS.filter(character =>
+          ['c1', 'c2'].includes(character.id) && !importedCharacterIds.has(character.id)
+        );
+        characters = [...imported.characters, ...missingTravelerCharacters];
         currentSettings = imported.settings;
         if (currentSettings.supportCast == null) currentSettings.supportCast = null;
         sets = imported.sets.map(set => ({ ...set, isOpen: set.isOpen !== false }));
@@ -530,7 +537,10 @@ function initDataTransfer() {
         currentActPointer = imported.actPointer;
         syncStageActsToDifficulty();
         clampActPointer();
-        localStorage.setItem(ownershipStorageKey, JSON.stringify(imported.defaultOwnership));
+        localStorage.setItem(ownershipStorageKey, JSON.stringify({
+          ...imported.defaultOwnership,
+          ...Object.fromEntries(missingTravelerCharacters.map(character => [character.id, character.owned]))
+        }));
         saveData();
       } catch (error) {
         characters = previousState.characters;
@@ -1017,7 +1027,7 @@ document.addEventListener('error', event => {
 }, true);
 
 function getElemImgSrc(elemKey) {
-  return `./assets/elements/${elemKey}.png`;
+  return `./assets/elements/${elemKey || 'none'}.png`;
 }
 
 // 本日のキャスト（IDリスト）を取得するヘルパー関数
@@ -1081,7 +1091,7 @@ function initCharManagement() {
         id: 'char_' + Date.now(),
         name: document.getElementById('add-char-name').value,
         rarity: parseInt(document.getElementById('add-char-rarity').value),
-        element: document.getElementById('add-char-element').value,
+        element: document.getElementById('add-char-element').value || null,
         image,
         owned: true
       };
@@ -1131,7 +1141,8 @@ function renderCharManagement() {
   const ownF = document.getElementById('filter-ownership').value;
   const rarF = document.getElementById('filter-rarity').value;
   const filtered = characters.filter(c => {
-    if (elemF !== 'all' && c.element !== elemF) return false;
+    if (elemF === 'none' && c.element !== null) return false;
+    if (elemF !== 'all' && elemF !== 'none' && c.element !== elemF) return false;
     if (ownF === 'owned' && !c.owned) return false;
     if (ownF === 'unowned' && c.owned) return false;
     if (rarF !== 'all' && c.rarity.toString() !== rarF) return false;
@@ -1178,6 +1189,7 @@ window.openEditModal = function(id) {
       <div class="form-item">
         <label>元素</label>
         <select id="edit-char-element" class="input-select">
+          <option value="" ${c.element === null ? 'selected' : ''}>未設定</option>
           ${Object.keys(CONFIG_RULES.elements).map(key => `
             <option value="${key}" ${c.element === key ? 'selected' : ''}>${CONFIG_RULES.elements[key]}</option>
           `).join('')}
@@ -1237,7 +1249,7 @@ window.openEditModal = function(id) {
         : document.getElementById('edit-char-image-name').value;
       c.name = document.getElementById('edit-char-name').value;
       c.rarity = parseInt(document.getElementById('edit-char-rarity').value);
-      c.element = document.getElementById('edit-char-element').value;
+      c.element = document.getElementById('edit-char-element').value || null;
       c.image = image;
       c.owned = currentOwned;
       overlay.classList.add('hidden');
@@ -2477,15 +2489,15 @@ window.openCastSelectModal = function(type, targetIndex) {
   if (type === 'opening') {
     selectedId = currentSettings.openingCast[targetIndex];
     candidates = characters.filter(c => {
-      if (!currentSettings.activeElements.includes(c.element)) return false;
       if (c.id === selectedId) return true;
+      if (!c.element || !currentSettings.activeElements.includes(c.element)) return false;
       return !chosenIds.has(c.id);
     });
   } else if (type === 'special') {
     selectedId = currentSettings.specialCast[targetIndex];
     candidates = characters.filter(c => {
-      if (currentSettings.activeElements.includes(c.element)) return false;
       if (c.id === selectedId) return true;
+      if (!c.element || currentSettings.activeElements.includes(c.element)) return false;
       return !chosenIds.has(c.id);
     });
   } else if (type === 'support') {
@@ -2494,7 +2506,7 @@ window.openCastSelectModal = function(type, targetIndex) {
       if (c.id === selectedId) return true;
       if (c.owned) return false;
       const isSpecialCast = currentSettings.specialCast.includes(c.id);
-      if (!isSpecialCast && !currentSettings.activeElements.includes(c.element)) return false;
+      if (!c.element || (!isSpecialCast && !currentSettings.activeElements.includes(c.element))) return false;
       if (currentSettings.openingCast.includes(c.id)) return false;
       return isSpecialCast || !chosenIds.has(c.id);
     });
