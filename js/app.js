@@ -95,7 +95,7 @@ const DEFAULT_CHARACTERS = [
   { id: "c94", name: "シトラリ", rarity: 5, element: "cryo", image: "094_シトラリ.webp", owned: true },
   { id: "c95", name: "藍硯", rarity: 4, element: "anemo", image: "095_藍硯.webp", owned: false },
   { id: "c96", name: "夢見月瑞希", rarity: 5, element: "anemo", image: "096_夢見月瑞希.webp", owned: true },
-  { id: "c97", name: "ヴァレサ", rarity: 5, element: "electro", image: "097_ヴァレサ.webp", owned: false },
+  { id: "c97", name: "ヴァレサ", rarity: 5, element: "electro", image: "097_ヴァレサ.webp", owned:  true }, 
   { id: "c98", name: "イアンサ", rarity: 4, element: "electro", image: "098_イアンサ.webp", owned: true },
   { id: "c99", name: "エスコフィエ", rarity: 5, element: "cryo", image: "099_エスコフィエ.webp", owned: true },
   { id: "c100", name: "イファ", rarity: 4, element: "anemo", image: "100_イファ.webp", owned: true },
@@ -119,10 +119,12 @@ const DEFAULT_CHARACTERS = [
   { id: "c118", name: "サンドローネ", rarity: 5, element: "cryo", image: "118_サンドローネ.webp", owned: true },
   { id: "c119", name: "オデット", rarity: 5, element: "cryo", image: "119_オデット.webp", owned: true },
   { id: "c120", name: "アリョーシャ", rarity: 4, element: "electro", image: "120_アリョーシャ.webp", owned: true },
-  { id: "c121", name: "ヴォジャニーツァ", rarity: 5, element: "hydro", image: "121_ヴォジャニーツァ.webp", owned: false },
-  { id: "c122", name: "ヴェスナ", rarity: 5, element: "anemo", image: "122_ヴェスナ.webp", owned: false },
+  { id: "c121", name: "ヴェスナ", rarity: 5, element: "anemo", image: "121_ヴェスナ.webp", owned: false },
+  { id: "c122", name: "ヴォジャニーツァ", rarity: 5, element: "hydro", image: "122_ヴォジャニーツァ.webp", owned: false },
   { id: "c123", name: "ミティヤ", rarity: 5, element: "electro", image: "123_ミティヤ.webp", owned: true },
   { id: "c124", name: "バレリー", rarity: 4, element: "electro", image: "124_バレリー.webp", owned: true },
+   { id: "c125", name: "アナスターシャ", rarity: 5, element: "cryo", image: "125_アナスターシャ.webp", owned: true },
+    { id: "c126", name: "ダニカ", rarity: 5, element: "electro", image: "126_ダニカ.webp", owned: true }
 ];
 
 const DEFAULT_SETTINGS = {
@@ -153,7 +155,79 @@ const CONFIG_RULES = {
   ]
 };
 
-let characters = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}chars`)) || DEFAULT_CHARACTERS;
+const storedCharacters = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}chars`));
+const ownershipStorageKey = `${STORAGE_PREFIX}default_owned`;
+const storedDefaultOwnership = JSON.parse(localStorage.getItem(ownershipStorageKey) || 'null');
+const storedCharactersById = new Map(
+  (Array.isArray(storedCharacters) ? storedCharacters : [])
+    .filter(character => character && character.id)
+    .map(character => [character.id, character])
+);
+const defaultCharacterIds = new Set(DEFAULT_CHARACTERS.map(character => character.id));
+const defaultOwnership = Object.fromEntries(
+  DEFAULT_CHARACTERS.map(character => [character.id, character.owned])
+);
+const reorderedCharacterIds = new Set(['c121', 'c122']);
+const reorderedCharacterImageNames = new Set([
+  '121_ヴェスナ.webp',
+  '122_ヴォジャニーツァ.webp',
+  '121_ヴォジャニーツァ.webp',
+  '122_ヴェスナ.webp'
+]);
+const reorderedCharacterNames = new Set(['ヴェスナ', 'ヴォジャニーツァ']);
+const hasStaleReorderedIdentity = character =>
+  reorderedCharacterIds.has(character.id) &&
+  reorderedCharacterNames.has(character.name) &&
+  reorderedCharacterImageNames.has(character.image);
+const hasMissingReorderedImage = character =>
+  reorderedCharacterIds.has(character.id) &&
+  (!character.image || !character.image.trim());
+let characters = DEFAULT_CHARACTERS.map(character => {
+  const storedCharacter = storedCharactersById.get(character.id);
+  const hasUserOwnershipOverride = storedDefaultOwnership &&
+    storedCharacter &&
+    storedCharacter.owned !== storedDefaultOwnership[character.id];
+  const hasStaleIdentity = storedCharacter && hasStaleReorderedIdentity(storedCharacter);
+  const hasMissingImage = storedCharacter && hasMissingReorderedImage(storedCharacter);
+  return {
+    ...character,
+    ...(storedCharacter || {}),
+    ...(hasStaleIdentity ? {
+      name: character.name,
+      element: character.element,
+      image: character.image
+    } : {}),
+    ...(hasMissingImage ? { image: character.image } : {}),
+    owned: hasUserOwnershipOverride ? storedCharacter.owned : character.owned
+  };
+});
+if (Array.isArray(storedCharacters)) {
+  characters.push(...storedCharacters.filter(character =>
+    character && character.id && !defaultCharacterIds.has(character.id)
+  ));
+
+  const needsCharacterSync = DEFAULT_CHARACTERS.some(character => {
+    const stored = storedCharactersById.get(character.id);
+    if (!stored) return true;
+    const hasUserOverride = storedDefaultOwnership &&
+      stored.owned !== storedDefaultOwnership[character.id];
+    return hasStaleReorderedIdentity(stored) ||
+      hasMissingReorderedImage(stored) ||
+      (!hasUserOverride && stored.owned !== character.owned);
+  });
+  if (needsCharacterSync) {
+    try {
+      localStorage.setItem(`${STORAGE_PREFIX}chars`, JSON.stringify(characters));
+    } catch (error) {
+      console.error('標準キャラクターの情報を保存済みデータに同期できませんでした:', error);
+    }
+  }
+}
+try {
+  localStorage.setItem(ownershipStorageKey, JSON.stringify(defaultOwnership));
+} catch (error) {
+  console.error('標準キャラクターの所持状態を保存できませんでした:', error);
+}
 let currentSettings = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}settings`)) || JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 if (!currentSettings.rejectedCast) { currentSettings.rejectedCast = []; }
 
@@ -184,6 +258,7 @@ normalizeCurrentCastSelections();
 let sets = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}sets`)) || [
   { id: "set-1", name: "パーティ A", slots: [ { role: "attacker", charId: null }, { role: "sub_attacker", charId: null }, { role: "supporter", charId: null }, { role: "healer", charId: null } ] }
 ];
+sets = sets.map(set => ({ ...set, isOpen: set.isOpen !== false }));
 
 let stageHand = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}stage_hand`)) || [];
 let stageActs = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}stage_acts`)) || [];
@@ -296,6 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initConfigTab();
   initMainTab();
   initStageTab();
+  initDataTransfer();
   renderAll();
 });
 
@@ -317,6 +393,599 @@ function renderAll() {
   renderCharManagement();
 }
 
+function getExportData() {
+  return {
+    format: 'imaginarium-theater-save',
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      characters,
+      settings: currentSettings,
+      sets,
+      stageHand,
+      stageActs,
+      actPointer: currentActPointer,
+      defaultOwnership: JSON.parse(localStorage.getItem(ownershipStorageKey) || 'null') || defaultOwnership
+    }
+  };
+}
+
+function validateImportData(save) {
+  const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  if (!isRecord(save) || save.format !== 'imaginarium-theater-save' || save.version !== 1 || !isRecord(save.data)) {
+    throw new Error('このツールのエクスポートJSONではありません。');
+  }
+
+  const { characters: importedCharacters, settings, sets: importedSets, stageHand: importedHand,
+    stageActs: importedActs, actPointer, defaultOwnership: importedOwnership } = save.data;
+  if (!Array.isArray(importedCharacters) || !isRecord(settings) || !Array.isArray(importedSets) ||
+      !Array.isArray(importedHand) || !Array.isArray(importedActs) || !Number.isInteger(actPointer) ||
+      !isRecord(importedOwnership)) {
+    throw new Error('JSONの保存データ形式が正しくありません。');
+  }
+  if (!['easy', 'normal', 'hard', 'master', 'tsukiyomi'].includes(settings.difficulty) ||
+      !Array.isArray(settings.activeElements) || !Array.isArray(settings.openingCast) ||
+      !Array.isArray(settings.specialCast) || !Array.isArray(settings.rejectedCast) ||
+      !(settings.supportCast == null || typeof settings.supportCast === 'string')) {
+    throw new Error('今期設定の形式が正しくありません。');
+  }
+  if (!importedCharacters.every(character =>
+    isRecord(character) && typeof character.id === 'string' && typeof character.name === 'string' &&
+    typeof character.image === 'string' && typeof character.owned === 'boolean' &&
+    [4, 5].includes(character.rarity) && Object.hasOwn(CONFIG_RULES.elements, character.element))) {
+    throw new Error('キャラクターデータの形式が正しくありません。');
+  }
+  if (!importedSets.every(set =>
+    isRecord(set) && typeof set.id === 'string' && typeof set.name === 'string' &&
+    Array.isArray(set.slots) && set.slots.length === 4 &&
+    set.slots.every(slot => isRecord(slot) && typeof slot.role === 'string' &&
+      (slot.charId === null || typeof slot.charId === 'string')))) {
+    throw new Error('公演プランの形式が正しくありません。');
+  }
+  if (!importedActs.every(act =>
+    isRecord(act) && typeof act.id === 'string' && typeof act.name === 'string' &&
+    Array.isArray(act.slots) && act.slots.length === 4 &&
+    act.slots.every(charId => charId === null || typeof charId === 'string'))) {
+    throw new Error('上演準備データの形式が正しくありません。');
+  }
+  const validIds = values => values.every(id => id === null || typeof id === 'string');
+  if (!validIds(settings.openingCast) || !validIds(settings.specialCast) ||
+      !validIds(settings.rejectedCast) || !settings.activeElements.every(element => Object.hasOwn(CONFIG_RULES.elements, element)) ||
+      !importedHand.every(charId => typeof charId === 'string') ||
+      !Object.values(importedOwnership).every(owned => typeof owned === 'boolean')) {
+    throw new Error('キャスト設定の形式が正しくありません。');
+  }
+  return save.data;
+}
+
+function downloadFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function getExportFilename(extension) {
+  const now = new Date();
+  const localDate = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+  const localTime = [now.getHours(), now.getMinutes(), now.getSeconds()].map(value => String(value).padStart(2, '0')).join('-');
+  return `imaginarium-theater-${localDate}_${localTime}.${extension}`;
+}
+
+function initDataTransfer() {
+  const overlay = document.getElementById('modal-overlay');
+  const body = document.getElementById('modal-body');
+  const fileInput = document.getElementById('import-json-input');
+  document.getElementById('btn-data-transfer').addEventListener('click', () => {
+    setCharacterSelectModalLayout(false);
+    document.getElementById('modal-title').textContent = 'エクスポート・インポート';
+    body.innerHTML = `
+      <div class="data-transfer-actions">
+        <button id="btn-export-json" class="btn btn-primary btn-block">JSONファイルをエクスポート</button>
+        <button id="btn-export-stage-image" class="btn btn-secondary btn-block">上演準備を画像で出力</button>
+        <button id="btn-import-json" class="btn btn-secondary btn-block">JSONファイルをインポート</button>
+        <p id="data-transfer-status" class="help-text" role="status"></p>
+      </div>
+    `;
+    body.querySelector('#btn-export-json').addEventListener('click', () => {
+      const json = JSON.stringify(getExportData(), null, 2);
+      downloadFile(new Blob([json], { type: 'application/json' }), getExportFilename('json'));
+    });
+    body.querySelector('#btn-export-stage-image').addEventListener('click', async event => {
+      const button = event.currentTarget;
+      const status = body.querySelector('#data-transfer-status');
+      await exportStageImage(button, status);
+    });
+    body.querySelector('#btn-import-json').addEventListener('click', () => fileInput.click());
+    overlay.classList.remove('hidden');
+  });
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    fileInput.value = '';
+    if (!file) return;
+    const status = body.querySelector('#data-transfer-status');
+    try {
+      const imported = validateImportData(JSON.parse(await file.text()));
+      if (!confirm('現在のキャラクター・設定・公演プラン・上演準備を、JSONの内容で置き換えます。よろしいですか？')) return;
+
+      const storageKeys = [
+        `${STORAGE_PREFIX}chars`, `${STORAGE_PREFIX}settings`, `${STORAGE_PREFIX}sets`,
+        `${STORAGE_PREFIX}stage_hand`, `${STORAGE_PREFIX}stage_acts`,
+        `${STORAGE_PREFIX}act_pointer`, ownershipStorageKey
+      ];
+      const previousStorage = new Map(storageKeys.map(key => [key, localStorage.getItem(key)]));
+      const previousState = { characters, currentSettings, sets, stageHand, stageActs, currentActPointer };
+      try {
+        characters = imported.characters;
+        currentSettings = imported.settings;
+        if (currentSettings.supportCast == null) currentSettings.supportCast = null;
+        sets = imported.sets.map(set => ({ ...set, isOpen: set.isOpen !== false }));
+        stageHand = imported.stageHand;
+        stageActs = imported.stageActs;
+        currentActPointer = imported.actPointer;
+        syncStageActsToDifficulty();
+        clampActPointer();
+        localStorage.setItem(ownershipStorageKey, JSON.stringify(imported.defaultOwnership));
+        saveData();
+      } catch (error) {
+        characters = previousState.characters;
+        currentSettings = previousState.currentSettings;
+        sets = previousState.sets;
+        stageHand = previousState.stageHand;
+        stageActs = previousState.stageActs;
+        currentActPointer = previousState.currentActPointer;
+        storageKeys.forEach(key => localStorage.removeItem(key));
+        previousStorage.forEach((value, key) => {
+          if (value !== null) localStorage.setItem(key, value);
+        });
+        renderAll();
+        throw error;
+      }
+      overlay.classList.add('hidden');
+    } catch (error) {
+      const statusMessage = `インポートに失敗しました: ${error.message}`;
+      if (status) status.textContent = statusMessage;
+      else alert(statusMessage);
+    }
+  });
+}
+
+async function exportStageImage(button, status) {
+  button.disabled = true;
+  status.textContent = '画像を作成しています…';
+  try {
+    const blob = await createStageResultImage();
+    downloadFile(blob, getExportFilename('png'));
+    status.textContent = 'PNG画像を出力しました。';
+  } catch (error) {
+    status.textContent = `画像を出力できませんでした: ${error.message}`;
+  } finally {
+    button.disabled = false;
+  }
+}
+
+// ===============================================================
+// 上演準備の画像出力
+// ---------------------------------------------------------------
+// ・サイトの .char-card / .party-slot と同じ寸法(110×140)・配色でCanvasに直接描く
+// ・画像は fetch で読み込み → Blob 化してから描画するため、キャンバスが汚染(tainted)されない
+//   （http(s):// で開いている場合のみ。file:// ではブラウザの仕様で不可能）
+// ・SVG経由は外部画像が読み込まれず壊れるため使用しない
+// ===============================================================
+
+// true にすると、サイト上の表示と同じく「手札に入っていないキャラ」をグレー表示で出力する
+const EXPORT_GRAY_NOT_IN_HAND = false;
+const EXPORT_SCALE = 3; // 出力倍率（1論理px = 3px）
+
+const EXPORT_COLORS = {
+  panelBorder: '#403f79',
+  mutedBorder: '#4b5563',
+  accentGold: '#e5b869',
+  textMain: '#e2e8f0',
+  textSub: '#94a3b8',
+  star5: '#c89d53',
+  star4: '#9172bf',
+  cardBg: 'rgba(25, 22, 46, 0.9)',
+  cardSolid: '#19162E',
+  slotBg: 'rgba(9, 9, 26, 0.7)',
+  selectBg: 'rgba(8, 8, 26, 0.5)',
+  sectionBg: 'rgba(25, 22, 46, 0.5)',
+  headerBg: 'rgba(9, 9, 26, 0.45)',
+  labelBg: 'rgba(0, 0, 0, 0.85)',
+  iconBg: 'rgba(0, 0, 0, 0.75)'
+};
+
+const exportImageCache = new Map();
+
+// file:// で開いている場合：assets フォルダを1回だけ選んでもらい、画像をブラウザ内(IndexedDB)に記憶する
+const EXPORT_DB_NAME = 'imaginarium-export-assets';
+const EXPORT_DB_STORE = 'kv';
+const EXPORT_DB_KEY = 'assets';
+
+function openExportDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(EXPORT_DB_NAME, 1);
+    request.onupgradeneeded = () => request.result.createObjectStore(EXPORT_DB_STORE);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function readExportAssetsFromDb() {
+  try {
+    const db = await openExportDb();
+    return await new Promise((resolve, reject) => {
+      const query = db.transaction(EXPORT_DB_STORE).objectStore(EXPORT_DB_STORE).get(EXPORT_DB_KEY);
+      query.onsuccess = () => resolve(query.result || null);
+      query.onerror = () => reject(query.error);
+    });
+  } catch (error) {
+    return null;
+  }
+}
+
+async function writeExportAssetsToDb(assets) {
+  try {
+    const db = await openExportDb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(EXPORT_DB_STORE, 'readwrite');
+      tx.objectStore(EXPORT_DB_STORE).put(assets, EXPORT_DB_KEY);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (error) {
+    console.warn('画像の記憶に失敗しました（次回もフォルダ選択が必要になります）:', error);
+  }
+}
+
+function pickExportAssetFiles() {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.webkitdirectory = true;
+    input.style.display = 'none';
+    input.addEventListener('change', () => {
+      input.remove();
+      resolve(Array.from(input.files));
+    });
+    input.addEventListener('cancel', () => {
+      input.remove();
+      reject(new Error('フォルダが選択されませんでした。'));
+    });
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
+function getExportMimeType(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  return ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
+}
+
+let exportAssetDataPromise = null;
+function loadExportAssetData() {
+  if (!exportAssetDataPromise) {
+    exportAssetDataPromise = (async () => {
+      const stored = await readExportAssetsFromDb();
+      if (stored && stored['assets/ui/theater_background.png']) return stored;
+
+      alert('初回のみ：画像出力に使う画像を読み込みます。\nassets フォルダが入っているフォルダ（index.html があるフォルダ）を選んでください。');
+      const files = await pickExportAssetFiles();
+      const assets = {};
+      for (const file of files) {
+        const path = file.webkitRelativePath.normalize('NFC');
+        const i = path.indexOf('assets/');
+        const key = i >= 0 ? path.slice(i) : 'assets/' + path.split('/').slice(1).join('/');
+        const ok = /^assets\/(characters|elements)\/[^/]+\.(webp|png|jpe?g|gif)$/i.test(key)
+          || key === 'assets/ui/theater_background.png'
+          || key === 'assets/ui/placeholder.png';
+        if (!ok) continue;
+        assets[key] = new Blob([await file.arrayBuffer()], { type: getExportMimeType(key) });
+      }
+      if (!assets['assets/ui/theater_background.png']) {
+        throw new Error('選んだフォルダに assets/ui/theater_background.png がありません。index.html があるフォルダを選んでください。');
+      }
+      await writeExportAssetsToDb(assets);
+      return assets;
+    })();
+    exportAssetDataPromise.catch(() => { exportAssetDataPromise = null; });
+  }
+  return exportAssetDataPromise;
+}
+
+function loadExportImage(src) {
+  if (exportImageCache.has(src)) return exportImageCache.get(src);
+  const promise = (async () => {
+    let objectUrl = null;
+    let url = src;
+    if (!src.startsWith('data:')) {
+      if (window.location.protocol === 'file:') {
+        const key = src.replace(/^\.?\//, '').normalize('NFC');
+        const assets = await loadExportAssetData();
+        if (!assets[key]) throw new Error(`選んだフォルダに画像がありません: ${key}`);
+        objectUrl = URL.createObjectURL(assets[key]);
+        url = objectUrl;
+      } else {
+        const response = await fetch(src);
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${src}`);
+        objectUrl = URL.createObjectURL(await response.blob());
+        url = objectUrl;
+      }
+    }
+    try {
+      return await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error(`画像を読み込めません: ${src.slice(0, 60)}`));
+        image.src = url;
+      });
+    } finally {
+      if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    }
+  })();
+  exportImageCache.set(src, promise);
+  promise.catch(() => exportImageCache.delete(src));
+  return promise;
+}
+
+// キャラ画像が無い／読み込めない場合はプレースホルダー、それも無理なら null
+async function loadExportImageSafe(src, fallback = './assets/ui/placeholder.png') {
+  try {
+    return await loadExportImage(src);
+  } catch (error) {
+    if (!fallback || fallback === src) return null;
+    return loadExportImageSafe(fallback, null);
+  }
+}
+
+function exportRoundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawExportCover(ctx, image, x, y, w, h) {
+  const scale = Math.max(w / image.width, h / image.height);
+  const dw = image.width * scale;
+  const dh = image.height * scale;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
+  ctx.clip();
+  ctx.drawImage(image, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  ctx.restore();
+}
+
+// キャラ名を最大2行に折り返す（site の .name-label と同様に文字単位で改行）
+function wrapExportName(ctx, name, maxWidth) {
+  const lines = [''];
+  for (const ch of Array.from(name)) {
+    const current = lines[lines.length - 1];
+    if (ctx.measureText(current + ch).width <= maxWidth || current === '') {
+      lines[lines.length - 1] = current + ch;
+    } else if (lines.length < 2) {
+      lines.push(ch);
+    } else {
+      lines[1] = lines[1].replace(/.$/, '…');
+      break;
+    }
+  }
+  return lines;
+}
+
+// 110×140 のキャラカード（.char-card / .party-slot.filled と同じ見た目）
+function drawExportCard(ctx, x, y, char, images, gray) {
+  const W = 110, H = 140, B = 2, R = 8;
+  const c = EXPORT_COLORS;
+  const borderColor = gray ? c.mutedBorder : (char.rarity === 5 ? c.star5 : c.star4);
+
+  ctx.save();
+  exportRoundRectPath(ctx, x, y, W, H, R);
+  ctx.fillStyle = gray ? c.cardSolid : c.cardBg;
+  ctx.fill();
+  ctx.clip();
+
+  const innerX = x + B, innerY = y + B, innerW = W - B * 2, innerH = H - B * 2;
+  const labelH = 30;
+  const avatarH = innerH - labelH;
+
+  // 中身（グレー時は半透明＋モノクロ）
+  ctx.save();
+  if (gray) {
+    ctx.globalAlpha = 0.35;
+    if ('filter' in ctx) ctx.filter = 'grayscale(100%)';
+  }
+  if (images.avatar) {
+    drawExportCover(ctx, images.avatar, innerX, innerY, innerW, avatarH);
+  }
+  // 名前ラベル
+  ctx.fillStyle = c.labelBg;
+  ctx.fillRect(innerX, innerY + avatarH, innerW, labelH);
+  ctx.fillStyle = c.textMain;
+  ctx.font = '400 12px "Zen Old Mincho", serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const lines = wrapExportName(ctx, char.name, innerW - 8);
+  const lineH = 13.2;
+  const labelCenter = innerY + avatarH + labelH / 2;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, innerX + innerW / 2, labelCenter + (i - (lines.length - 1) / 2) * lineH);
+  });
+  // 元素アイコン（左上 4px / 24px 円 / padding 2px）
+  ctx.fillStyle = c.iconBg;
+  ctx.beginPath();
+  ctx.arc(innerX + 4 + 12, innerY + 4 + 12, 12, 0, Math.PI * 2);
+  ctx.fill();
+  if (images.element) ctx.drawImage(images.element, innerX + 4 + 2, innerY + 4 + 2, 20, 20);
+  ctx.restore();
+
+  ctx.restore();
+
+  // 枠線（border: 2px）
+  ctx.save();
+  exportRoundRectPath(ctx, x + B / 2, y + B / 2, W - B, H - B, R - 1);
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = B;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// 空き枠（.party-slot の破線枠）
+function drawExportEmptySlot(ctx, x, y, index) {
+  const c = EXPORT_COLORS;
+  ctx.save();
+  exportRoundRectPath(ctx, x, y, 110, 140, 8);
+  ctx.fillStyle = c.slotBg;
+  ctx.fill();
+  exportRoundRectPath(ctx, x + 1, y + 1, 108, 138, 7);
+  ctx.setLineDash([6, 4]);
+  ctx.strokeStyle = c.panelBorder;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = c.textSub;
+  ctx.font = '400 12.8px "Zen Old Mincho", serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`+ 枠 ${index + 1}`, x + 55, y + 70);
+  ctx.restore();
+}
+
+async function createStageResultImage() {
+  // file:// の場合は、クリック直後（フォルダ選択が許される間）に画像データを用意する
+  if (window.location.protocol === 'file:') await loadExportAssetData();
+
+  const c = EXPORT_COLORS;
+  const cardW = 110, cardH = 140, slotGap = 24;
+  const outerPad = 40, actPad = 12, actHeaderH = 40, actGap = 10, headerH = 100;
+  const actW = actPad * 2 + cardW * 4 + slotGap * 3;
+  const W = outerPad * 2 + actW;
+  const actH = actHeaderH + actPad * 2 + cardH;
+  const H = headerH + stageActs.length * (actH + actGap) + outerPad - actGap;
+  const scale = Math.min(EXPORT_SCALE, 16000 / H);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(W * scale);
+  canvas.height = Math.round(H * scale);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('画像を描画できません。');
+  ctx.scale(scale, scale);
+  ctx.imageSmoothingQuality = 'high';
+
+  // フォント読み込みを待つ
+  if (document.fonts && document.fonts.load) {
+    await Promise.all([
+      document.fonts.load('400 12px "Zen Old Mincho"', '幕あア'),
+      document.fonts.load('700 12px "Zen Old Mincho"', '0123456789/'),
+      document.fonts.load('900 28px "Zen Old Mincho"', '上演準備')
+    ]).catch(() => {});
+  }
+
+  // 背景（サイトと同じ cover）
+  // 背景が読めない場合は、原因が分かるようエラーにする（黙って画像なしで出力しない）
+  let background;
+  try {
+    if (window.location.protocol === 'file:') await loadExportAssetData();
+    background = await loadExportImage('./assets/ui/theater_background.png');
+  } catch (error) {
+    throw new Error(`背景画像を読み込めませんでした（${error.message}）`);
+  }
+  ctx.fillStyle = '#0f141d';
+  ctx.fillRect(0, 0, W, H);
+  if (background) drawExportCover(ctx, background, 0, 0, W, H);
+
+  // ヘッダー帯
+  ctx.fillStyle = c.headerBg;
+  ctx.fillRect(0, 0, W, headerH - 14);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = c.accentGold;
+  ctx.font = '900 28px "Zen Old Mincho", serif';
+  ctx.fillText('上演準備', outerPad, 44);
+  const difficulty = CONFIG_RULES.difficulties[currentSettings.difficulty];
+  ctx.fillStyle = c.textSub;
+  ctx.font = '400 14px "Zen Old Mincho", serif';
+  ctx.fillText(`${difficulty ? difficulty.name : currentSettings.difficulty}　${new Date().toLocaleDateString('ja-JP')}`, outerPad, 68);
+
+  // 使用回数・キャラ画像の事前読み込み
+  const characterById = new Map(characters.map(ch => [ch.id, ch]));
+  const usageCounts = {};
+  const usedIds = new Set();
+  stageActs.forEach(act => act.slots.forEach(id => {
+    if (!id) return;
+    usageCounts[id] = (usageCounts[id] || 0) + 1;
+    usedIds.add(id);
+  }));
+  const imageSets = new Map();
+  await Promise.all([...usedIds].map(async id => {
+    const ch = characterById.get(id);
+    if (!ch) return;
+    const [avatar, element] = await Promise.all([
+      loadExportImageSafe(getImgSrc(ch.image)),
+      loadExportImageSafe(getElemImgSrc(ch.element), null)
+    ]);
+    imageSets.set(id, { avatar, element });
+  }));
+
+  // 各幕
+  stageActs.forEach((act, actIndex) => {
+    const top = headerH + actIndex * (actH + actGap);
+    const left = outerPad;
+
+    // パネル（.act-card）
+    exportRoundRectPath(ctx, left, top, actW, actH, 6);
+    ctx.fillStyle = c.selectBg;
+    ctx.fill();
+    ctx.save();
+    exportRoundRectPath(ctx, left, top, actW, actH, 6);
+    ctx.clip();
+    ctx.fillStyle = c.sectionBg;
+    ctx.fillRect(left, top, actW, actHeaderH);
+    ctx.restore();
+    exportRoundRectPath(ctx, left + 0.5, top + 0.5, actW - 1, actH - 1, 5.5);
+    ctx.strokeStyle = c.panelBorder;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // 幕タイトル
+    ctx.fillStyle = c.accentGold;
+    ctx.font = '700 14.4px "Zen Old Mincho", serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`▼ ${act.name}`, left + 14, top + actHeaderH / 2);
+
+    // 4枠
+    for (let i = 0; i < 4; i++) {
+      const x = left + actPad + i * (cardW + slotGap);
+      const y = top + actHeaderH + actPad;
+      const ch = characterById.get(act.slots[i]);
+      if (!ch) {
+        drawExportEmptySlot(ctx, x, y, i);
+      } else {
+        const gray = EXPORT_GRAY_NOT_IN_HAND && !stageHand.includes(ch.id);
+        drawExportCard(ctx, x, y, ch, imageSets.get(ch.id) || {}, gray);
+      }
+    }
+  });
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error('PNGに変換できませんでした。'));
+    }, 'image/png');
+  });
+}
+
+
 function initTabs() {
   document.querySelectorAll('.tab-btn, .header-title-group').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -336,8 +1005,16 @@ function initTabs() {
 
 function getImgSrc(filename) {
   if (!filename || filename.trim() === '') return './assets/ui/placeholder.png';
+  if (filename.startsWith('data:image/')) return filename;
   return `./assets/characters/${filename}`;
 }
+
+document.addEventListener('error', event => {
+  const image = event.target;
+  if (!(image instanceof HTMLImageElement) || !image.classList.contains('avatar') || image.dataset.fallbackApplied) return;
+  image.dataset.fallbackApplied = 'true';
+  image.src = './assets/ui/placeholder.png';
+}, true);
 
 function getElemImgSrc(elemKey) {
   return `./assets/elements/${elemKey}.png`;
@@ -386,35 +1063,66 @@ function initCharManagement() {
   const fileInput = document.getElementById('add-char-file-input');
   const fileLabel = document.getElementById('add-char-file-label');
   const imageNameInput = document.getElementById('add-char-image-name');
+  let selectedImageFile = null;
 
   fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      const name = e.target.files[0].name;
+    selectedImageFile = e.target.files[0] || null;
+    if (selectedImageFile) {
+      const name = selectedImageFile.name;
       fileLabel.innerText = `選択済: ${name}`;
-      imageNameInput.value = name;
     }
   });
 
-  document.getElementById('form-add-char').addEventListener('submit', (e) => {
+  document.getElementById('form-add-char').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const newChar = {
-      id: 'char_' + Date.now(),
-      name: document.getElementById('add-char-name').value,
-      rarity: parseInt(document.getElementById('add-char-rarity').value),
-      element: document.getElementById('add-char-element').value,
-      image: imageNameInput.value || '',
-      owned: true
-    };
-    characters.push(newChar);
-    e.target.reset();
-    fileLabel.innerText = "＋ 画像を選択";
-    imageNameInput.value = '';
-    saveData();
+    try {
+      const image = selectedImageFile ? await imageFileToDataUrl(selectedImageFile) : '';
+      const newChar = {
+        id: 'char_' + Date.now(),
+        name: document.getElementById('add-char-name').value,
+        rarity: parseInt(document.getElementById('add-char-rarity').value),
+        element: document.getElementById('add-char-element').value,
+        image,
+        owned: true
+      };
+      characters.push(newChar);
+      e.target.reset();
+      selectedImageFile = null;
+      fileLabel.innerText = "＋ 画像を選択";
+      imageNameInput.value = '';
+      saveData();
+    } catch (error) {
+      console.error('キャラクター画像を登録できませんでした:', error);
+      alert('画像の読み込みまたは保存に失敗しました。形式・サイズ（20MB以下）・ブラウザーの保存容量を確認してください。');
+    }
   });
 
   ['filter-element', 'filter-ownership', 'filter-rarity'].forEach(id => {
     document.getElementById(id).addEventListener('change', renderCharManagement);
   });
+}
+
+async function imageFileToDataUrl(file) {
+  if (!file.type.startsWith('image/')) {
+    throw new Error('選択したファイルは画像ではありません。');
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    throw new Error('画像ファイルが20MBを超えています。');
+  }
+
+  const image = await createImageBitmap(file);
+  try {
+    const scale = Math.min(1, 512 / Math.max(image.width, image.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('画像を処理できません。');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/webp', 0.82);
+  } finally {
+    image.close();
+  }
 }
 
 function renderCharManagement() {
@@ -479,9 +1187,10 @@ window.openEditModal = function(id) {
         <label>画像ファイル</label>
         <label class="custom-file-upload">
           <input type="file" id="edit-char-file-input" accept="image/*">
-          <span id="edit-char-file-label">${c.image ? '変更: ' + c.image : '＋ 画像を選択'}</span>
+          <span id="edit-char-file-label">${c.image ? '登録済み（変更できます）' : '＋ 画像を選択'}</span>
         </label>
         <input type="hidden" id="edit-char-image-name" value="${c.image || ''}">
+        <small class="help-text">画像はこのブラウザーに保存されます（長辺512pxに縮小）。</small>
       </div>
       <div class="form-item">
         <label>所持状態</label>
@@ -511,23 +1220,32 @@ window.openEditModal = function(id) {
     btnUnowned.className = 'toggle-btn active-unowned';
   });
 
+  let selectedImageFile = null;
   document.getElementById('edit-char-file-input').addEventListener('change', (e) => {
-    if (e.target.files.length > 0) {
-      const name = e.target.files[0].name;
+    selectedImageFile = e.target.files[0] || null;
+    if (selectedImageFile) {
+      const name = selectedImageFile.name;
       document.getElementById('edit-char-file-label').innerText = `変更: ${name}`;
-      document.getElementById('edit-char-image-name').value = name;
     }
   });
 
-  document.getElementById('form-edit-char').addEventListener('submit', (e) => {
+  document.getElementById('form-edit-char').addEventListener('submit', async (e) => {
     e.preventDefault();
-    c.name = document.getElementById('edit-char-name').value;
-    c.rarity = parseInt(document.getElementById('edit-char-rarity').value);
-    c.element = document.getElementById('edit-char-element').value;
-    c.image = document.getElementById('edit-char-image-name').value;
-    c.owned = currentOwned;
-    overlay.classList.add('hidden');
-    saveData();
+    try {
+      const image = selectedImageFile
+        ? await imageFileToDataUrl(selectedImageFile)
+        : document.getElementById('edit-char-image-name').value;
+      c.name = document.getElementById('edit-char-name').value;
+      c.rarity = parseInt(document.getElementById('edit-char-rarity').value);
+      c.element = document.getElementById('edit-char-element').value;
+      c.image = image;
+      c.owned = currentOwned;
+      overlay.classList.add('hidden');
+      saveData();
+    } catch (error) {
+      console.error('キャラクター画像を更新できませんでした:', error);
+      alert('画像の読み込みまたは保存に失敗しました。形式・サイズ（20MB以下）・ブラウザーの保存容量を確認してください。');
+    }
   });
 
   overlay.classList.remove('hidden');
@@ -658,6 +1376,7 @@ function initMainTab() {
     sets.push({
       id: 'set-' + Date.now(),
       name: `パーティ ${String.fromCharCode(65 + sets.length)}`,
+      isOpen: true,
       slots: [
         { role: "attacker", charId: null },
         { role: "sub_attacker", charId: null },
@@ -882,13 +1601,14 @@ function renderSets() {
   container.innerHTML = sets.map((s, setIndex) => `
     <div class="set-card" draggable="true" data-set-index="${setIndex}">
       <div class="set-header">
+        <button class="set-collapse-toggle" aria-expanded="${s.isOpen}" aria-controls="set-slots-main-${setIndex}" aria-label="${s.isOpen ? 'パーティを折り畳む' : 'パーティを展開'}" title="${s.isOpen ? '折り畳む' : '展開'}" onclick="event.stopPropagation(); toggleSetOpen(${setIndex})">${s.isOpen ? '▼' : '▶'}</button>
         <input type="text" value="${s.name}" onchange="updateSetName(${setIndex}, this.value)">
         <div class="set-header-actions">
           <button class="btn btn-secondary btn-sm" onclick="openTeamSelectionModal('set', ${setIndex})">選択</button>
           <button class="btn btn-danger btn-sm" onclick="removeSet(${setIndex})">削除</button>
         </div>
       </div>
-      <div class="set-slots">
+      <div id="set-slots-main-${setIndex}" class="set-slots ${s.isOpen ? '' : 'hidden'}">
         ${s.slots.map((slot, slotIndex) => {
           const char = characters.find(c => c.id === slot.charId);
           return `
@@ -915,6 +1635,11 @@ function renderSets() {
   setupSetCardDragAndDrop();
   setupSlotSortDragAndDrop(); // 2.2 公演プラン内（4人）の並び替え機能
 }
+
+window.toggleSetOpen = function(setIndex) {
+  sets[setIndex].isOpen = !sets[setIndex].isOpen;
+  saveData();
+};
 
 // 2.2 公演プラン内4枠の並び替え（同一セット内のみ）
 function setupSlotSortDragAndDrop() {
@@ -1340,20 +2065,24 @@ function renderStageTab() {
     return (charId && !stageHand.includes(charId)) ? 'is-grayed' : '';
   }
 
-  // 1. 左列：公演プラン（手札に入っていないキャラはグレー表示）
-  planContainer.innerHTML = sets.map((s) => `
+  // 1. 中央列：公演プラン（手札に入っていないキャラはグレー表示）
+  planContainer.innerHTML = sets.map((s, setIndex) => `
     <div class="set-card">
       <div class="set-header">
+        <button class="set-collapse-toggle" aria-expanded="${s.isOpen}" aria-controls="set-slots-stage-${setIndex}" aria-label="${s.isOpen ? 'パーティを折り畳む' : 'パーティを展開'}" title="${s.isOpen ? '折り畳む' : '展開'}" onclick="toggleSetOpen(${setIndex})">${s.isOpen ? '▼' : '▶'}</button>
         <input type="text" value="${s.name}" readonly>
       </div>
-      <div class="set-slots">
+      <div id="set-slots-stage-${setIndex}" class="set-slots ${s.isOpen ? '' : 'hidden'}">
         ${s.slots.map((slot) => {
           const char = characters.find(c => c.id === slot.charId);
           const grayClass = char ? grayIfNotInHand(char.id) : '';
           return `
             <div class="set-slot-item">
-              <div class="party-slot ${char ? 'filled star-' + char.rarity : ''} ${grayClass}">
+              <div class="party-slot ${char ? 'filled star-' + char.rarity : ''} ${grayClass}"
+                   draggable="${!!char}"
+                   data-plan-char-id="${char ? char.id : ''}">
                 ${char ? `
+                  <span class="vitality-badge">${vitalityMap[char.id] || 0}/2</span>
                   <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
                   <img src="${getImgSrc(char.image)}" class="avatar">
                   <div class="name-label">${char.name}</div>
@@ -1378,7 +2107,7 @@ function renderStageTab() {
     </div>
   `).join('');
 
-  // 2. 中央列：出演可能キャスト
+  // 2. 左列：出演可能キャスト
   //   ・手札(stageHand)に未追加のキャラ → グレーアウト表示（待機キャスト状態）
   //   ・手札に追加済みのキャラ         → 通常カラー
   //   ・活力カウントは、グレー／カラーに関わらず常に表示する
@@ -1534,6 +2263,17 @@ function setupStageDragAndDrop() {
     });
   });
 
+  document.querySelectorAll('#stage-plan-container .party-slot[draggable="true"]').forEach(slot => {
+    slot.addEventListener('dragstart', (e) => {
+      beginDrag(e, 'stage-plan-char');
+      e.dataTransfer.setData('charId', slot.dataset.planCharId);
+    });
+
+    slot.addEventListener('dragend', () => {
+      resetDragState();
+    });
+  });
+
   document.querySelectorAll('#stage-acts-container .party-slot').forEach(slot => {
     slot.addEventListener('dragstart', (e) => {
       const actIdx = slot.dataset.actIdx;
@@ -1556,8 +2296,8 @@ function setupStageDragAndDrop() {
     });
 
     slot.addEventListener('dragover', (e) => {
-      // 手札からの配置、または幕内キャラの移動のみ受け付ける
-      if (!isDragKind('stage-hand-char', 'act-slot-char')) return;
+      // 手札・公演プランからの配置、または幕内キャラの移動のみ受け付ける
+      if (!isDragKind('stage-hand-char', 'stage-plan-char', 'act-slot-char')) return;
       e.preventDefault();
       slot.classList.add('drag-over');
     });
@@ -1571,7 +2311,7 @@ function setupStageDragAndDrop() {
       const targetActIdx = parseInt(slot.dataset.actIdx);
       const targetSlotIdx = parseInt(slot.dataset.slotIdx);
 
-      if (type === 'stage-hand-char') {
+      if (type === 'stage-hand-char' || type === 'stage-plan-char') {
         const charId = e.dataTransfer.getData('charId');
         const vitalityMap = calculateVitality();
         if ((vitalityMap[charId] || 0) < 2) {
