@@ -481,7 +481,8 @@ function validateImportData(save) {
     isRecord(character) && typeof character.id === 'string' && typeof character.name === 'string' &&
     typeof character.image === 'string' && typeof character.owned === 'boolean' &&
     [4, 5].includes(character.rarity) &&
-    (character.element === null || Object.hasOwn(CONFIG_RULES.elements, character.element)))) {
+    (character.element === null || (typeof character.element === 'string' &&
+      Object.hasOwn(CONFIG_RULES.elements, character.element))))) {
     throw new Error('キャラクターデータの形式が正しくありません。');
   }
   if (!importedSets.every(set =>
@@ -499,7 +500,9 @@ function validateImportData(save) {
   }
   const validIds = values => values.every(id => id === null || typeof id === 'string');
   if (!validIds(settings.openingCast) || !validIds(settings.specialCast) ||
-      !validIds(settings.rejectedCast) || !settings.activeElements.every(element => Object.hasOwn(CONFIG_RULES.elements, element)) ||
+      !validIds(settings.rejectedCast) ||
+      !settings.activeElements.every(element => typeof element === 'string' &&
+        Object.hasOwn(CONFIG_RULES.elements, element)) ||
       !importedHand.every(charId => typeof charId === 'string') ||
       !Object.values(importedOwnership).every(owned => typeof owned === 'boolean')) {
     throw new Error('キャスト設定の形式が正しくありません。');
@@ -1169,9 +1172,33 @@ function initTutorialLinks() {
 }
 
 function getImgSrc(filename) {
-  if (!filename || filename.trim() === '') return './assets/ui/placeholder.png';
-  if (filename.startsWith('data:image/')) return filename;
-  return `./assets/characters/${filename}`;
+  if (typeof filename !== 'string' || filename.trim() === '') return './assets/ui/placeholder.png';
+  if (/^data:/i.test(filename)) {
+    return /^data:image\/(?:png|jpe?g|gif|webp|bmp|avif);base64,[a-z0-9+/]+={0,2}$/i.test(filename)
+      ? filename
+      : './assets/ui/placeholder.png';
+  }
+  if (filename === '.' || filename === '..' || /[\/\\\u0000-\u001f]/.test(filename)) {
+    return './assets/ui/placeholder.png';
+  }
+  return `./assets/characters/${encodeURIComponent(filename)}`;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+}
+
+function inlineStringArg(value) {
+  const json = JSON.stringify(String(value))
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+  return escapeHtml(json);
 }
 
 document.addEventListener('error', event => {
@@ -1307,10 +1334,10 @@ function renderCharManagement() {
   });
 
   container.innerHTML = filtered.map(c => `
-    <div class="char-card star-${c.rarity}" onclick="openEditModal('${c.id}')">
+    <div class="char-card star-${c.rarity}" onclick="openEditModal(${inlineStringArg(c.id)})">
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-      <img src="${getImgSrc(c.image)}" class="avatar">
-      <div class="name-label">${c.name}</div>
+      <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+      <div class="name-label">${escapeHtml(c.name)}</div>
     </div>
   `).join('');
 }
@@ -1376,7 +1403,7 @@ function openOwnershipEditor() {
       card.setAttribute('aria-pressed', String(owned));
       card.innerHTML = `
         <span class="elem-icon"><img src="${getElemImgSrc(character.element)}" class="elem-img"></span>
-        <img src="${getImgSrc(character.image)}" class="avatar" alt="">
+        <img src="${escapeHtml(getImgSrc(character.image))}" class="avatar" alt="">
         <div class="name-label"></div>
         <span class="ownership-state"></span>
       `;
@@ -1454,7 +1481,7 @@ window.openEditModal = function(id) {
     <form id="form-edit-char" class="char-form" style="width:100%;">
       <div class="form-item">
         <label>名前</label>
-        <input type="text" id="edit-char-name" class="input-text" value="${c.name}" required>
+        <input type="text" id="edit-char-name" class="input-text" value="${escapeHtml(c.name)}" required>
       </div>
       <div class="form-item">
         <label>レアリティ</label>
@@ -1478,7 +1505,7 @@ window.openEditModal = function(id) {
           <input type="file" id="edit-char-file-input" accept="image/*">
           <span id="edit-char-file-label">${c.image ? '登録済み（変更できます）' : '＋ 画像を選択'}</span>
         </label>
-        <input type="hidden" id="edit-char-image-name" value="${c.image || ''}">
+        <input type="hidden" id="edit-char-image-name" value="${escapeHtml(c.image || '')}">
         <small class="help-text">画像はこのブラウザーに保存されます（長辺512pxに縮小）。</small>
       </div>
       <div class="form-item">
@@ -1489,7 +1516,7 @@ window.openEditModal = function(id) {
         </div>
       </div>
       <button type="submit" class="btn btn-primary btn-block" style="margin-top:10px;">保存する</button>
-      <button type="button" class="btn btn-danger btn-block" onclick="deleteChar('${c.id}')">このキャラクターを削除する</button>
+      <button type="button" class="btn btn-danger btn-block" onclick="deleteChar(${inlineStringArg(c.id)})">このキャラクターを削除する</button>
     </form>
   `;
 
@@ -1604,8 +1631,8 @@ function renderConfigUI() {
       <div class="party-slot ${char ? 'filled' : ''}" onclick="openCastSelectModal('opening', ${i})">
         ${char ? `
           <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
-          <img src="${getImgSrc(char.image)}" class="avatar">
-          <div class="name-label">${char.name}</div>
+          <img src="${escapeHtml(getImgSrc(char.image))}" class="avatar">
+          <div class="name-label">${escapeHtml(char.name)}</div>
         ` : `<span class="slot-placeholder">+ 枠 ${i+1}</span>`}
       </div>
     `;
@@ -1621,8 +1648,8 @@ function renderConfigUI() {
       <div class="party-slot ${char ? 'filled' : ''}" onclick="openCastSelectModal('special', ${i})">
         ${char ? `
           <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
-          <img src="${getImgSrc(char.image)}" class="avatar">
-          <div class="name-label">${char.name}</div>
+          <img src="${escapeHtml(getImgSrc(char.image))}" class="avatar">
+          <div class="name-label">${escapeHtml(char.name)}</div>
         ` : `<span class="slot-placeholder">+ 招待 ${i+1}</span>`}
       </div>
     `;
@@ -1874,15 +1901,15 @@ function renderCardHTML(c, assignedIds, forceDraggable = false, isOpening = fals
   return `
     <div class="char-card star-${c.rarity} ${isAssigned ? 'assigned' : ''} ${rejectedClass} ${selectedClass}" 
          draggable="${isDraggable}" 
-         data-id="${c.id}"
+         data-id="${escapeHtml(c.id)}"
          data-is-opening="${isOpening}"
          data-is-rejected="${isRejected}"
          data-is-support="${isSupport}"
          style="${unownedStyle}"
          ${extraOnClick}>
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-      <img src="${getImgSrc(c.image)}" class="avatar">
-      <div class="name-label" title="${c.name}">${c.name}</div>
+      <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+      <div class="name-label" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
     </div>
   `;
 }
@@ -1893,7 +1920,7 @@ function renderSets() {
     <div class="set-card" draggable="true" data-set-index="${setIndex}">
       <div class="set-header">
         <button class="set-collapse-toggle" aria-expanded="${s.isOpen}" aria-controls="set-slots-main-${setIndex}" aria-label="${s.isOpen ? 'パーティを折り畳む' : 'パーティを展開'}" title="${s.isOpen ? '折り畳む' : '展開'}" onclick="event.stopPropagation(); toggleSetOpen(${setIndex})">${s.isOpen ? '▼' : '▶'}</button>
-        <input type="text" value="${s.name}" onchange="updateSetName(${setIndex}, this.value)">
+        <input type="text" value="${escapeHtml(s.name)}" onchange="updateSetName(${setIndex}, this.value)">
         <div class="set-header-actions">
           <button class="btn btn-secondary btn-sm" onclick="openTeamSelectionModal('set', ${setIndex})">選択</button>
           <button class="btn btn-danger btn-sm" onclick="removeSet(${setIndex})">削除</button>
@@ -1911,8 +1938,8 @@ function renderSets() {
                    onclick="openSlotSelectModal(${setIndex}, ${slotIndex})">
                 ${char ? `
                   <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
-                  <img src="${getImgSrc(char.image)}" class="avatar">
-                  <div class="name-label">${char.name}</div>
+                  <img src="${escapeHtml(getImgSrc(char.image))}" class="avatar">
+                  <div class="name-label">${escapeHtml(char.name)}</div>
                 ` : `<span class="slot-placeholder">+ 選択</span>`}
               </div>
             </div>
@@ -2361,7 +2388,7 @@ function renderStageTab() {
     <div class="set-card">
       <div class="set-header">
         <button class="set-collapse-toggle" aria-expanded="${s.isOpen}" aria-controls="set-slots-stage-${setIndex}" aria-label="${s.isOpen ? 'パーティを折り畳む' : 'パーティを展開'}" title="${s.isOpen ? '折り畳む' : '展開'}" onclick="toggleSetOpen(${setIndex})">${s.isOpen ? '▼' : '▶'}</button>
-        <input type="text" value="${s.name}" readonly>
+        <input type="text" value="${escapeHtml(s.name)}" readonly>
       </div>
       <div id="set-slots-stage-${setIndex}" class="set-slots ${s.isOpen ? '' : 'hidden'}">
         ${s.slots.map((slot) => {
@@ -2375,8 +2402,8 @@ function renderStageTab() {
                 ${char ? `
                   <span class="vitality-badge">${vitalityMap[char.id] || 0}/2</span>
                   <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
-                  <img src="${getImgSrc(char.image)}" class="avatar">
-                  <div class="name-label">${char.name}</div>
+                  <img src="${escapeHtml(getImgSrc(char.image))}" class="avatar">
+                  <div class="name-label">${escapeHtml(char.name)}</div>
                 ` : `<span class="slot-placeholder">空</span>`}
               </div>
             </div>
@@ -2393,8 +2420,8 @@ function renderStageTab() {
   reserveContainer.innerHTML = reserveList.map(c => `
     <div class="char-card star-${c.rarity} ${grayIfNotInHand(c.id)}">
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-      <img src="${getImgSrc(c.image)}" class="avatar">
-      <div class="name-label">${c.name}</div>
+      <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+      <div class="name-label">${escapeHtml(c.name)}</div>
     </div>
   `).join('');
 
@@ -2431,13 +2458,13 @@ function renderStageTab() {
     return `
       <div class="char-card star-${c.rarity} ${grayClass}" 
            draggable="${isDraggable}" 
-           data-stage-char-id="${c.id}"
+           data-stage-char-id="${escapeHtml(c.id)}"
            style="${cursorStyle}"
-           onclick="openHandCardActionModal('${c.id}')">
+           onclick="openHandCardActionModal(${inlineStringArg(c.id)})">
         <span class="vitality-badge">${usage}/2</span>
         <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-        <img src="${getImgSrc(c.image)}" class="avatar">
-        <div class="name-label">${c.name}</div>
+        <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+        <div class="name-label">${escapeHtml(c.name)}</div>
       </div>
     `;
   }
@@ -2466,7 +2493,7 @@ function renderStageTab() {
     return `
       <div class="act-card">
         <div class="act-header" onclick="toggleActOpen(${actIdx})">
-          <span class="act-title-text">${summaryText}</span>
+          <span class="act-title-text">${escapeHtml(summaryText)}</span>
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); openTeamSelectionModal('act', ${actIdx})">選択</button>
         </div>
         <div class="act-body ${act.isOpen ? '' : 'hidden'}">
@@ -2483,8 +2510,8 @@ function renderStageTab() {
                 ${char ? `
                   <span class="vitality-badge">${usage}/2</span>
                   <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
-                  <img src="${getImgSrc(char.image)}" class="avatar">
-                  <div class="name-label">${char.name}</div>
+                  <img src="${escapeHtml(getImgSrc(char.image))}" class="avatar">
+                  <div class="name-label">${escapeHtml(char.name)}</div>
                 ` : `<span class="slot-placeholder">+ 枠 ${slotIdx + 1}</span>`}
               </div>
             `;
@@ -2535,10 +2562,10 @@ window.openActSlotSelectModal = function(actIdx, slotIdx) {
     const isExhausted = usage >= 2 && !isCurrent;
     return `
       <div class="char-card star-${c.rarity} ${isExhausted ? 'assigned' : ''} ${isCurrent ? 'active-selected' : ''}"
-           ${!isExhausted ? `onclick="selectActSlotChar(${actIdx}, ${slotIdx}, '${c.id}')"` : ''}>
+           ${!isExhausted ? `onclick="selectActSlotChar(${actIdx}, ${slotIdx}, ${inlineStringArg(c.id)})"` : ''}>
         <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-        <img src="${getImgSrc(c.image)}" class="avatar">
-        <div class="name-label">${c.name}</div>
+        <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+        <div class="name-label">${escapeHtml(c.name)}</div>
       </div>
     `;
   }).join('');
@@ -2658,10 +2685,10 @@ function openAddHandModal() {
   );
 
   body.innerHTML = candidates.map(c => `
-    <div class="char-card star-${c.rarity}" onclick="addHandChar('${c.id}')">
+    <div class="char-card star-${c.rarity}" onclick="addHandChar(${inlineStringArg(c.id)})">
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-      <img src="${getImgSrc(c.image)}" class="avatar">
-      <div class="name-label">${c.name}</div>
+      <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+      <div class="name-label">${escapeHtml(c.name)}</div>
     </div>
   `).join('');
 
@@ -2693,10 +2720,10 @@ function openRemoveHandModal() {
     body.innerHTML = `<p class="help-text">取り消せるキャラがいません。</p>`;
   } else {
     body.innerHTML = candidates.map(c => `
-      <div class="char-card star-${c.rarity}" onclick="removeHandCharBulk('${c.id}')">
+      <div class="char-card star-${c.rarity}" onclick="removeHandCharBulk(${inlineStringArg(c.id)})">
         <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-        <img src="${getImgSrc(c.image)}" class="avatar">
-        <div class="name-label">${c.name}</div>
+        <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+        <div class="name-label">${escapeHtml(c.name)}</div>
       </div>
     `).join('');
   }
@@ -2729,17 +2756,17 @@ window.openHandCardActionModal = function(charId) {
     <div class="hand-action-panel">
       <div class="char-card star-${c.rarity}">
         <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-        <img src="${getImgSrc(c.image)}" class="avatar">
-        <div class="name-label">${c.name}</div>
+        <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+        <div class="name-label">${escapeHtml(c.name)}</div>
       </div>
   `;
 
   if (isOpening) {
     actionHtml += `<p class="help-text">開幕キャストは常に手札に含まれるため、取り消しできません。</p>`;
   } else if (isAdded) {
-    actionHtml += `<button class="btn btn-danger btn-block" onclick="removeFromHandAction('${charId}')">手札から取り消す</button>`;
+    actionHtml += `<button class="btn btn-danger btn-block" onclick="removeFromHandAction(${inlineStringArg(charId)})">手札から取り消す</button>`;
   } else {
-    actionHtml += `<button class="btn btn-primary btn-block" onclick="addHandCharFromCardModal('${charId}')">手札に追加する</button>`;
+    actionHtml += `<button class="btn btn-primary btn-block" onclick="addHandCharFromCardModal(${inlineStringArg(charId)})">手札に追加する</button>`;
   }
 
   actionHtml += `</div>`;
@@ -2803,10 +2830,10 @@ window.openCastSelectModal = function(type, targetIndex) {
   }
 
   body.innerHTML = candidates.map(c => `
-    <div class="char-card star-${c.rarity} ${c.id === selectedId ? 'active-selected' : ''}" onclick="selectModalChar('${type}', ${targetIndex}, '${c.id}')">
+    <div class="char-card star-${c.rarity} ${c.id === selectedId ? 'active-selected' : ''}" onclick="selectModalChar(${inlineStringArg(type)}, ${targetIndex}, ${inlineStringArg(c.id)})">
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-      <img src="${getImgSrc(c.image)}" class="avatar">
-      <div class="name-label">${c.name}</div>
+      <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+      <div class="name-label">${escapeHtml(c.name)}</div>
     </div>
   `).join('');
 
@@ -2852,12 +2879,12 @@ window.openTeamSelectionModal = function(type, targetIndex) {
       const isUnavailable = !allowedCharIds.has(char.id);
       return `
         <div class="char-card multi-select-card star-${char.rarity} ${isSelected ? 'active-selected' : ''} ${isUnavailable ? 'assigned' : ''}"
-             data-char-id="${char.id}"
-             ${isUnavailable ? '' : `onclick="toggleTeamSelectionChar('${char.id}')"`}>
+             data-char-id="${escapeHtml(char.id)}"
+             ${isUnavailable ? '' : `onclick="toggleTeamSelectionChar(${inlineStringArg(char.id)})"`}>
           <span class="team-selection-order">${isSelected ? selectedIndex + 1 : ''}</span>
           <span class="elem-icon"><img src="${getElemImgSrc(char.element)}" class="elem-img"></span>
-          <img src="${getImgSrc(char.image)}" class="avatar">
-          <div class="name-label">${char.name}</div>
+          <img src="${escapeHtml(getImgSrc(char.image))}" class="avatar">
+          <div class="name-label">${escapeHtml(char.name)}</div>
         </div>
       `;
     }).join('') + `
@@ -2934,10 +2961,10 @@ window.openSlotSelectModal = function(setIdx, slotIdx) {
     const isCurrent = c.id === currentSlotCharId;
     return `
       <div class="char-card star-${c.rarity} ${isAssigned ? 'assigned' : ''} ${isCurrent ? 'active-selected' : ''}" 
-           ${!isAssigned ? `onclick="selectSlotChar(${setIdx}, ${slotIdx}, '${c.id}')"` : ''}>
+           ${!isAssigned ? `onclick="selectSlotChar(${setIdx}, ${slotIdx}, ${inlineStringArg(c.id)})"` : ''}>
         <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
-        <img src="${getImgSrc(c.image)}" class="avatar">
-        <div class="name-label">${c.name}</div>
+        <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
+        <div class="name-label">${escapeHtml(c.name)}</div>
       </div>
     `;
   }).join('');
