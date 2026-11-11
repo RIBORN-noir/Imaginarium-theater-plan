@@ -6,129 +6,128 @@ const DEFAULT_CHARACTERS = [
   { id: "c3", name: "ウェンティ", rarity: 5, element: "anemo", image: "003_ウェンティ.webp", owned: false },
   { id: "c4", name: "アンバー", rarity: 4, element: "pyro", image: "004_アンバー.webp", owned: true },
   { id: "c5", name: "ガイア", rarity: 4, element: "cryo", image: "005_ガイア.webp", owned: true },
-  { id: "c6", name: "ジン", rarity: 5, element: "anemo", image: "006_ジン.webp", owned: true },
+  { id: "c6", name: "ジン", rarity: 5, element: "anemo", image: "006_ジン.webp", owned: false },
   { id: "c7", name: "リサ", rarity: 4, element: "electro", image: "007_リサ.webp", owned: true },
-  { id: "c8", name: "ディルック", rarity: 5, element: "pyro", image: "008_ディルック.webp", owned: true },
-  { id: "c9", name: "バーバラ", rarity: 4, element: "hydro", image: "009_バーバラ.webp", owned: true },
-  { id: "c10", name: "香菱", rarity: 4, element: "pyro", image: "010_香菱.webp", owned: true },
-  { id: "c11", name: "レザー", rarity: 4, element: "electro", image: "011_レザー.webp", owned: true },
+  { id: "c8", name: "ディルック", rarity: 5, element: "pyro", image: "008_ディルック.webp", owned: false },
+  { id: "c9", name: "バーバラ", rarity: 4, element: "hydro", image: "009_バーバラ.webp", owned: false },
+  { id: "c10", name: "香菱", rarity: 4, element: "pyro", image: "010_香菱.webp", owned: false },
+  { id: "c11", name: "レザー", rarity: 4, element: "electro", image: "011_レザー.webp", owned: false },
   { id: "c12", name: "凝光", rarity: 4, element: "geo", image: "012_凝光.webp", owned: false },
-  { id: "c13", name: "行秋", rarity: 4, element: "hydro", image: "013_行秋.webp", owned: true },
-  { id: "c14", name: "七七", rarity: 5, element: "cryo", image: "014_七七.webp", owned: true },
-  { id: "c15", name: "刻晴", rarity: 5, element: "electro", image: "015_刻晴.webp", owned: true },
-  { id: "c16", name: "北斗", rarity: 4, element: "electro", image: "016_北斗.webp", owned: true },
-  { id: "c17", name: "ベネット", rarity: 4, element: "pyro", image: "017_ベネット.webp", owned: true },
-  { id: "c18", name: "ノエル", rarity: 4, element: "geo", image: "018_ノエル.webp", owned: true },
-  { id: "c19", name: "フィッシュル", rarity: 4, element: "electro", image: "019_フィッシュル.webp", owned: true },
-  { id: "c20", name: "スクロース", rarity: 4, element: "anemo", image: "020_スクロース.webp", owned: true },
+  { id: "c13", name: "行秋", rarity: 4, element: "hydro", image: "013_行秋.webp", owned: false },
+  { id: "c14", name: "七七", rarity: 5, element: "cryo", image: "014_七七.webp", owned: false },
+  { id: "c15", name: "刻晴", rarity: 5, element: "electro", image: "015_刻晴.webp", owned: false },
+  { id: "c16", name: "北斗", rarity: 4, element: "electro", image: "016_北斗.webp", owned: false },
+  { id: "c17", name: "ベネット", rarity: 4, element: "pyro", image: "017_ベネット.webp", owned: false },
+  { id: "c18", name: "ノエル", rarity: 4, element: "geo", image: "018_ノエル.webp", owned: false },
+  { id: "c19", name: "フィッシュル", rarity: 4, element: "electro", image: "019_フィッシュル.webp", owned: false },
+  { id: "c20", name: "スクロース", rarity: 4, element: "anemo", image: "020_スクロース.webp", owned: false },
   { id: "c21", name: "モナ", rarity: 5, element: "hydro", image: "021_モナ.webp", owned: false },
-  { id: "c22", name: "重雲", rarity: 4, element: "cryo", image: "022_重雲.webp", owned: true },
+  { id: "c22", name: "重雲", rarity: 4, element: "cryo", image: "022_重雲.webp", owned: false },
   { id: "c23", name: "クレー", rarity: 5, element: "pyro", image: "023_クレー.webp", owned: false },
   { id: "c24", name: "タルタリヤ", rarity: 5, element: "hydro", image: "024_タルタリヤ.webp", owned: false },
-  { id: "c25", name: "ディオナ", rarity: 4, element: "cryo", image: "025_ディオナ.webp", owned: true },
+  { id: "c25", name: "ディオナ", rarity: 4, element: "cryo", image: "025_ディオナ.webp", owned: false },
   { id: "c26", name: "鍾離", rarity: 5, element: "geo", image: "026_鍾離.webp", owned: false },
   { id: "c27", name: "辛炎", rarity: 4, element: "pyro", image: "027_辛炎.webp", owned: false },
   { id: "c28", name: "アルベド", rarity: 5, element: "geo", image: "028_アルベド.webp", owned: false },
   { id: "c29", name: "甘雨", rarity: 5, element: "cryo", image: "029_甘雨.webp", owned: false },
   { id: "c30", name: "魈", rarity: 5, element: "anemo", image: "030_魈.webp", owned: false },
   { id: "c31", name: "胡桃", rarity: 5, element: "pyro", image: "031_胡桃.webp", owned: false },
-  { id: "c32", name: "ロサリア", rarity: 4, element: "cryo", image: "032_ロサリア.webp", owned: true },
-  { id: "c33", name: "煙緋", rarity: 4, element: "pyro", image: "033_煙緋.webp", owned: true },
+  { id: "c32", name: "ロサリア", rarity: 4, element: "cryo", image: "032_ロサリア.webp", owned: false },
+  { id: "c33", name: "煙緋", rarity: 4, element: "pyro", image: "033_煙緋.webp", owned: false },
   { id: "c34", name: "エウルア", rarity: 5, element: "cryo", image: "034_エウルア.webp", owned: false },
   { id: "c35", name: "楓原万葉", rarity: 5, element: "anemo", image: "035_楓原万葉.webp", owned: false },
   { id: "c36", name: "神里綾華", rarity: 5, element: "cryo", image: "036_神里綾華.webp", owned: false },
   { id: "c37", name: "宵宮", rarity: 5, element: "pyro", image: "037_宵宮.webp", owned: false },
   { id: "c38", name: "早柚", rarity: 4, element: "anemo", image: "038_早柚.webp", owned: false },
   { id: "c39", name: "雷電将軍", rarity: 5, element: "electro", image: "039_雷電将軍.webp", owned: false },
-  { id: "c40", name: "九条裟羅", rarity: 4, element: "electro", image: "040_九条裟羅.webp", owned: true },
+  { id: "c40", name: "九条裟羅", rarity: 4, element: "electro", image: "040_九条裟羅.webp", owned: false },
   { id: "c41", name: "アーロイ", rarity: 5, element: "cryo", image: "041_アーロイ.webp", owned: false },
   { id: "c42", name: "珊瑚宮心海", rarity: 5, element: "hydro", image: "042_珊瑚宮心海.webp", owned: false },
-  { id: "c43", name: "トーマ", rarity: 4, element: "pyro", image: "043_トーマ.webp", owned: true },
+  { id: "c43", name: "トーマ", rarity: 4, element: "pyro", image: "043_トーマ.webp", owned: false },
   { id: "c44", name: "荒瀧一斗", rarity: 5, element: "geo", image: "044_荒瀧一斗.webp", owned: false },
-  { id: "c45", name: "ゴロー", rarity: 4, element: "geo", image: "045_ゴロー.webp", owned: true },
+  { id: "c45", name: "ゴロー", rarity: 4, element: "geo", image: "045_ゴロー.webp", owned: false },
   { id: "c46", name: "申鶴", rarity: 5, element: "cryo", image: "046_申鶴.webp", owned: false },
-  { id: "c47", name: "雲菫", rarity: 4, element: "geo", image: "047_雲菫.webp", owned: true },
+  { id: "c47", name: "雲菫", rarity: 4, element: "geo", image: "047_雲菫.webp", owned: false },
   { id: "c48", name: "八重神子", rarity: 5, element: "electro", image: "048_八重神子.webp", owned: false },
   { id: "c49", name: "神里綾人", rarity: 5, element: "hydro", image: "049_神里綾人.webp", owned: false },
   { id: "c50", name: "夜蘭", rarity: 5, element: "hydro", image: "050_夜蘭.webp", owned: false },
   { id: "c51", name: "久岐忍", rarity: 4, element: "electro", image: "051_久岐忍.webp", owned: false },
   { id: "c52", name: "鹿野院平蔵", rarity: 4, element: "anemo", image: "052_鹿野院平蔵.webp", owned: false },
-  { id: "c53", name: "ティナリ", rarity: 5, element: "dendro", image: "053_ティナリ.webp", owned: true },
-  { id: "c54", name: "コレイ", rarity: 4, element: "dendro", image: "054_コレイ.webp", owned: true },
-  { id: "c55", name: "ドリー", rarity: 4, element: "electro", image: "055_ドリー.webp", owned: true },
+  { id: "c53", name: "ティナリ", rarity: 5, element: "dendro", image: "053_ティナリ.webp", owned: false },
+  { id: "c54", name: "コレイ", rarity: 4, element: "dendro", image: "054_コレイ.webp", owned: false },
+  { id: "c55", name: "ドリー", rarity: 4, element: "electro", image: "055_ドリー.webp", owned: false },
   { id: "c56", name: "セノ", rarity: 5, element: "electro", image: "056_セノ.webp", owned: false },
-  { id: "c57", name: "キャンディス", rarity: 4, element: "hydro", image: "057_キャンディス.webp", owned: true },
+  { id: "c57", name: "キャンディス", rarity: 4, element: "hydro", image: "057_キャンディス.webp", owned: false },
   { id: "c58", name: "ニィロウ", rarity: 5, element: "hydro", image: "058_ニィロウ.webp", owned: false },
   { id: "c59", name: "ナヒーダ", rarity: 5, element: "dendro", image: "059_ナヒーダ.webp", owned: false },
-  { id: "c60", name: "レイラ", rarity: 4, element: "cryo", image: "060_レイラ.webp", owned: true },
+  { id: "c60", name: "レイラ", rarity: 4, element: "cryo", image: "060_レイラ.webp", owned: false },
   { id: "c61", name: "放浪者", rarity: 5, element: "anemo", image: "061_放浪者.webp", owned: false },
-  { id: "c62", name: "ファルザン", rarity: 4, element: "anemo", image: "062_ファルザン.webp", owned: true },
+  { id: "c62", name: "ファルザン", rarity: 4, element: "anemo", image: "062_ファルザン.webp", owned: false },
   { id: "c63", name: "アルハイゼン", rarity: 5, element: "dendro", image: "063_アルハイゼン.webp", owned: false },
-  { id: "c64", name: "ヨォーヨ", rarity: 4, element: "dendro", image: "064_ヨォーヨ.webp", owned: true },
-  { id: "c65", name: "ディシア", rarity: 5, element: "pyro", image: "065_ディシア.webp", owned: true },
-  { id: "c66", name: "ミカ", rarity: 4, element: "cryo", image: "066_ミカ.webp", owned: true },
+  { id: "c64", name: "ヨォーヨ", rarity: 4, element: "dendro", image: "064_ヨォーヨ.webp", owned: false },
+  { id: "c65", name: "ディシア", rarity: 5, element: "pyro", image: "065_ディシア.webp", owned: false },
+  { id: "c66", name: "ミカ", rarity: 4, element: "cryo", image: "066_ミカ.webp", owned: false },
   { id: "c67", name: "白朮", rarity: 5, element: "dendro", image: "067_白朮.webp", owned: false },
-  { id: "c68", name: "カーヴェ", rarity: 4, element: "dendro", image: "068_カーヴェ.webp", owned: true },
-  { id: "c69", name: "綺良々", rarity: 4, element: "dendro", image: "069_綺良々.webp", owned: true },
+  { id: "c68", name: "カーヴェ", rarity: 4, element: "dendro", image: "068_カーヴェ.webp", owned: false },
+  { id: "c69", name: "綺良々", rarity: 4, element: "dendro", image: "069_綺良々.webp", owned: false },
   { id: "c70", name: "リネ", rarity: 5, element: "pyro", image: "070_リネ.webp", owned: false },
-  { id: "c71", name: "リネット", rarity: 4, element: "anemo", image: "071_リネット.webp", owned: true },
-  { id: "c72", name: "フレミネ", rarity: 4, element: "cryo", image: "072_フレミネ.webp", owned: true },
-  { id: "c73", name: "ヌヴィレット", rarity: 5, element: "hydro", image: "073_ヌヴィレット.webp", owned: true },
+  { id: "c71", name: "リネット", rarity: 4, element: "anemo", image: "071_リネット.webp", owned: false },
+  { id: "c72", name: "フレミネ", rarity: 4, element: "cryo", image: "072_フレミネ.webp", owned: false },
+  { id: "c73", name: "ヌヴィレット", rarity: 5, element: "hydro", image: "073_ヌヴィレット.webp", owned: false },
   { id: "c74", name: "リオセスリ", rarity: 5, element: "cryo", image: "074_リオセスリ.webp", owned: false },
-  { id: "c75", name: "フリーナ", rarity: 5, element: "hydro", image: "075_フリーナ.webp", owned: true },
-  { id: "c76", name: "シャルロット", rarity: 4, element: "cryo", image: "076_シャルロット.webp", owned: true },
+  { id: "c75", name: "フリーナ", rarity: 5, element: "hydro", image: "075_フリーナ.webp", owned: false },
+  { id: "c76", name: "シャルロット", rarity: 4, element: "cryo", image: "076_シャルロット.webp", owned: false },
   { id: "c77", name: "ナヴィア", rarity: 5, element: "geo", image: "077_ナヴィア.webp", owned: false },
-  { id: "c78", name: "シュヴルーズ", rarity: 4, element: "pyro", image: "078_シュヴルーズ.webp", owned: true },
+  { id: "c78", name: "シュヴルーズ", rarity: 4, element: "pyro", image: "078_シュヴルーズ.webp", owned: false },
   { id: "c79", name: "閑雲", rarity: 5, element: "anemo", image: "079_閑雲.webp", owned: false },
-  { id: "c80", name: "嘉明", rarity: 4, element: "pyro", image: "080_嘉明.webp", owned: true },
+  { id: "c80", name: "嘉明", rarity: 4, element: "pyro", image: "080_嘉明.webp", owned: false },
   { id: "c81", name: "千織", rarity: 5, element: "geo", image: "081_千織.webp", owned: false },
   { id: "c82", name: "アルレッキーノ", rarity: 5, element: "pyro", image: "082_アルレッキーノ.webp", owned: false },
   { id: "c83", name: "クロリンデ", rarity: 5, element: "electro", image: "083_クロリンデ.webp", owned: false },
   { id: "c84", name: "シグウィン", rarity: 5, element: "hydro", image: "084_シグウィン.webp", owned: false },
-  { id: "c85", name: "セトス", rarity: 4, element: "electro", image: "085_セトス.webp", owned: true },
+  { id: "c85", name: "セトス", rarity: 4, element: "electro", image: "085_セトス.webp", owned: false },
   { id: "c86", name: "エミリエ", rarity: 5, element: "dendro", image: "086_エミリエ.webp", owned: false },
   { id: "c87", name: "ムアラニ", rarity: 5, element: "hydro", image: "087_ムアラニ.webp", owned: false },
-  { id: "c88", name: "カチーナ", rarity: 4, element: "geo", image: "088_カチーナ.webp", owned: true },
-  { id: "c89", name: "キィニチ", rarity: 5, element: "dendro", image: "089_キィニチ.webp", owned: true },
-  { id: "c90", name: "シロネン", rarity: 5, element: "geo", image: "090_シロネン.webp", owned: true },
+  { id: "c88", name: "カチーナ", rarity: 4, element: "geo", image: "088_カチーナ.webp", owned: false },
+  { id: "c89", name: "キィニチ", rarity: 5, element: "dendro", image: "089_キィニチ.webp", owned: false },
+  { id: "c90", name: "シロネン", rarity: 5, element: "geo", image: "090_シロネン.webp", owned: false },
   { id: "c91", name: "チャスカ", rarity: 5, element: "anemo", image: "091_チャスカ.webp", owned: false },
   { id: "c92", name: "オロルン", rarity: 4, element: "electro", image: "092_オロルン.webp", owned: false },
-  { id: "c93", name: "マーヴィカ", rarity: 5, element: "pyro", image: "093_マーヴィカ.webp", owned: true },
-  { id: "c94", name: "シトラリ", rarity: 5, element: "cryo", image: "094_シトラリ.webp", owned: true },
+  { id: "c93", name: "マーヴィカ", rarity: 5, element: "pyro", image: "093_マーヴィカ.webp", owned: false },
+  { id: "c94", name: "シトラリ", rarity: 5, element: "cryo", image: "094_シトラリ.webp", owned: false },
   { id: "c95", name: "藍硯", rarity: 4, element: "anemo", image: "095_藍硯.webp", owned: false },
-  { id: "c96", name: "夢見月瑞希", rarity: 5, element: "anemo", image: "096_夢見月瑞希.webp", owned: true },
-  { id: "c97", name: "ヴァレサ", rarity: 5, element: "electro", image: "097_ヴァレサ.webp", owned:  true }, 
-  { id: "c98", name: "イアンサ", rarity: 4, element: "electro", image: "098_イアンサ.webp", owned: true },
-  { id: "c99", name: "エスコフィエ", rarity: 5, element: "cryo", image: "099_エスコフィエ.webp", owned: true },
-  { id: "c100", name: "イファ", rarity: 4, element: "anemo", image: "100_イファ.webp", owned: true },
+  { id: "c96", name: "夢見月瑞希", rarity: 5, element: "anemo", image: "096_夢見月瑞希.webp", owned: false },
+  { id: "c97", name: "ヴァレサ", rarity: 5, element: "electro", image: "097_ヴァレサ.webp", owned: false }, 
+  { id: "c98", name: "イアンサ", rarity: 4, element: "electro", image: "098_イアンサ.webp", owned: false },
+  { id: "c99", name: "エスコフィエ", rarity: 5, element: "cryo", image: "099_エスコフィエ.webp", owned: false },
+  { id: "c100", name: "イファ", rarity: 4, element: "anemo", image: "100_イファ.webp", owned: false },
   { id: "c101", name: "スカーク", rarity: 5, element: "cryo", image: "101_スカーク.webp", owned: false },
-  { id: "c102", name: "ダリア", rarity: 4, element: "hydro", image: "102_ダリア.webp", owned: true },
-  { id: "c103", name: "イネファ", rarity: 5, element: "electro", image: "103_イネファ.webp", owned: true },
+  { id: "c102", name: "ダリア", rarity: 4, element: "hydro", image: "102_ダリア.webp", owned: false },
+  { id: "c103", name: "イネファ", rarity: 5, element: "electro", image: "103_イネファ.webp", owned: false },
   { id: "c104", name: "ラウマ", rarity: 5, element: "dendro", image: "104_ラウマ.webp", owned: false },
-  { id: "c105", name: "アイノ", rarity: 4, element: "hydro", image: "105_アイノ.webp", owned: true },
-  { id: "c106", name: "フリンズ", rarity: 5, element: "electro", image: "106_フリンズ.webp", owned: true },
+  { id: "c105", name: "アイノ", rarity: 4, element: "hydro", image: "105_アイノ.webp", owned: false },
+  { id: "c106", name: "フリンズ", rarity: 5, element: "electro", image: "106_フリンズ.webp", owned: false },
   { id: "c107", name: "ネフェル", rarity: 5, element: "dendro", image: "107_ネフェル.webp", owned: false },
   { id: "c108", name: "ドゥリン", rarity: 5, element: "pyro", image: "108_ドゥリン.webp", owned: false },
-  { id: "c109", name: "ヤフォダ", rarity: 4, element: "anemo", image: "109_ヤフォダ.webp", owned: true },
-  { id: "c110", name: "コロンビーナ", rarity: 5, element: "hydro", image: "110_コロンビーナ.webp", owned: true },
+  { id: "c109", name: "ヤフォダ", rarity: 4, element: "anemo", image: "109_ヤフォダ.webp", owned: false },
+  { id: "c110", name: "コロンビーナ", rarity: 5, element: "hydro", image: "110_コロンビーナ.webp", owned: false },
   { id: "c111", name: "兹白", rarity: 5, element: "geo", image: "111_兹白.webp", owned: false },
-  { id: "c112", name: "イルーガ", rarity: 4, element: "geo", image: "112_イルーガ.webp", owned: true },
+  { id: "c112", name: "イルーガ", rarity: 4, element: "geo", image: "112_イルーガ.webp", owned: false },
   { id: "c113", name: "ファルカ", rarity: 5, element: "anemo", image: "113_ファルカ.webp", owned: false },
-  { id: "c114", name: "リンネア", rarity: 5, element: "geo", image: "114_リンネア.webp", owned: true },
-  { id: "c115", name: "ニコ", rarity: 5, element: "pyro", image: "115_ニコ.webp", owned: true },
+  { id: "c114", name: "リンネア", rarity: 5, element: "geo", image: "114_リンネア.webp", owned: false },
+  { id: "c115", name: "ニコ", rarity: 5, element: "pyro", image: "115_ニコ.webp", owned: false },
   { id: "c116", name: "ローエン", rarity: 5, element: "cryo", image: "116_ローエン.webp", owned: false },
-  { id: "c117", name: "プルーネ", rarity: 4, element: "anemo", image: "117_プルーネ.webp", owned: true },
-  { id: "c118", name: "サンドローネ", rarity: 5, element: "cryo", image: "118_サンドローネ.webp", owned: true },
-  { id: "c119", name: "オデット", rarity: 5, element: "cryo", image: "119_オデット.webp", owned: true },
-  { id: "c120", name: "アリョーシャ", rarity: 4, element: "electro", image: "120_アリョーシャ.webp", owned: true },
+  { id: "c117", name: "プルーネ", rarity: 4, element: "anemo", image: "117_プルーネ.webp", owned: false },
+  { id: "c118", name: "サンドローネ", rarity: 5, element: "cryo", image: "118_サンドローネ.webp", owned: false },
+  { id: "c119", name: "オデット", rarity: 5, element: "cryo", image: "119_オデット.webp", owned: false },
+  { id: "c120", name: "アリョーシャ", rarity: 4, element: "electro", image: "120_アリョーシャ.webp", owned: false },
   { id: "c121", name: "ヴェスナ", rarity: 5, element: "anemo", image: "121_ヴェスナ.webp", owned: false },
   { id: "c122", name: "ヴォジャニーツァ", rarity: 5, element: "hydro", image: "122_ヴォジャニーツァ.webp", owned: false },
-  { id: "c123", name: "ミティヤ", rarity: 5, element: "electro", image: "123_ミティヤ.webp", owned: true },
-  { id: "c124", name: "バレリー", rarity: 4, element: "electro", image: "124_バレリー.webp", owned: true },
-   { id: "c125", name: "アナスターシャ", rarity: 5, element: "cryo", image: "125_アナスターシャ.webp", owned: true },
-    { id: "c126", name: "ダニカ", rarity: 5, element: "electro", image: "126_ダニカ.webp", owned: true }
+  { id: "c123", name: "ミティヤ", rarity: 5, element: "electro", image: "123_ミティヤ.webp", owned: false },
+  { id: "c124", name: "バレリー", rarity: 4, element: "electro", image: "124_バレリー.webp", owned: false },
+   { id: "c125", name: "アナスターシャ", rarity: 5, element: "cryo", image: "125_アナスターシャ.webp", owned: false },
+    { id: "c126", name: "ダニカ", rarity: 5, element: "electro", image: "126_ダニカ.webp", owned: false }
 ];
-
 const DEFAULT_SETTINGS = {
   difficulty: "normal",
   activeElements: [],
@@ -200,7 +199,7 @@ let characters = DEFAULT_CHARACTERS.map(character => {
       image: character.image
     } : {}),
     ...(hasMissingImage ? { image: character.image } : {}),
-    owned: hasUserOwnershipOverride ? storedCharacter.owned : character.owned
+    owned: hasUserOwnershipOverride ? storedCharacter.owned : defaultOwnership[character.id]
   };
 });
 if (Array.isArray(storedCharacters)) {
@@ -483,14 +482,31 @@ function initDataTransfer() {
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
   const fileInput = document.getElementById('import-json-input');
+  const ownershipFileInput = document.getElementById('import-ownership-json-input');
   document.getElementById('btn-data-transfer').addEventListener('click', () => {
     setCharacterSelectModalLayout(false);
     document.getElementById('modal-title').textContent = 'エクスポート・インポート';
     body.innerHTML = `
       <div class="data-transfer-actions">
-        <button id="btn-export-json" class="btn btn-primary btn-block">JSONファイルをエクスポート</button>
-        <button id="btn-export-stage-image" class="btn btn-secondary btn-block">上演準備を画像で出力</button>
-        <button id="btn-import-json" class="btn btn-secondary btn-block">JSONファイルをインポート</button>
+        <section class="data-transfer-group">
+          <h4>公演内容</h4>
+          <div class="data-transfer-group-actions">
+            <button id="btn-export-json" class="btn btn-primary">公演内容をエクスポート</button>
+            <button id="btn-import-json" class="btn btn-secondary">公演内容をインポート</button>
+          </div>
+        </section>
+        <section class="data-transfer-group">
+          <h4>公演結果</h4>
+          <button id="btn-export-stage-image" class="btn btn-secondary">公演結果を画像出力</button>
+        </section>
+        <section class="data-transfer-group">
+          <h4>所持状況</h4>
+          <p class="help-text">所持状況のみを保存・読み込みします。キャラクター情報や公演内容は変更されません。</p>
+          <div class="data-transfer-group-actions">
+            <button id="btn-export-ownership" class="btn btn-secondary">所持状況をエクスポート</button>
+            <button id="btn-import-ownership" class="btn btn-secondary">所持状況をインポート</button>
+          </div>
+        </section>
         <p id="data-transfer-status" class="help-text" role="status"></p>
       </div>
     `;
@@ -504,6 +520,19 @@ function initDataTransfer() {
       await exportStageImage(button, status);
     });
     body.querySelector('#btn-import-json').addEventListener('click', () => fileInput.click());
+    body.querySelector('#btn-export-ownership').addEventListener('click', () => {
+      const data = {
+        format: 'imaginarium-theater-ownership',
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        ownership: Object.fromEntries(characters.map(character => [character.id, character.owned]))
+      };
+      const json = JSON.stringify(data, null, 2);
+      const filename = getExportFilename('json').replace('imaginarium-theater-', 'imaginarium-theater-ownership-');
+      downloadFile(new Blob([json], { type: 'application/json' }), filename);
+      body.querySelector('#data-transfer-status').textContent = '所持状況をJSONファイルに出力しました。';
+    });
+    body.querySelector('#btn-import-ownership').addEventListener('click', () => ownershipFileInput.click());
     overlay.classList.remove('hidden');
   });
 
@@ -559,6 +588,34 @@ function initDataTransfer() {
       overlay.classList.add('hidden');
     } catch (error) {
       const statusMessage = `インポートに失敗しました: ${error.message}`;
+      if (status) status.textContent = statusMessage;
+      else alert(statusMessage);
+    }
+  });
+
+  ownershipFileInput.addEventListener('change', async () => {
+    const file = ownershipFileInput.files[0];
+    ownershipFileInput.value = '';
+    if (!file) return;
+    const status = body.querySelector('#data-transfer-status');
+    try {
+      const importedOwnership = validateOwnershipImport(JSON.parse(await file.text()));
+      const matchingCharacterIds = new Set(characters
+        .filter(character => Object.hasOwn(importedOwnership, character.id))
+        .map(character => character.id));
+      if (matchingCharacterIds.size === 0) {
+        throw new Error('この図鑑に該当するキャラクターがありません。');
+      }
+      if (!confirm(`該当する${matchingCharacterIds.size}人の所持状況を更新します。キャラクター情報は変更されません。よろしいですか？`)) return;
+
+      const updatedCharacters = characters.map(character => Object.hasOwn(importedOwnership, character.id)
+        ? { ...character, owned: importedOwnership[character.id] }
+        : character
+      );
+      persistOwnership(updatedCharacters);
+      status.textContent = `${matchingCharacterIds.size}人の所持状況を取り込みました。JSONに含まれないキャラクターの所持状況は変更していません。`;
+    } catch (error) {
+      const statusMessage = `所持状況の取り込みに失敗しました: ${error.message}`;
       if (status) status.textContent = statusMessage;
       else alert(statusMessage);
     }
@@ -1110,6 +1167,8 @@ function initCharManagement() {
   ['filter-element', 'filter-ownership', 'filter-rarity'].forEach(id => {
     document.getElementById(id).addEventListener('change', renderCharManagement);
   });
+
+  initOwnershipTools();
 }
 
 async function imageFileToDataUrl(file) {
@@ -1156,6 +1215,118 @@ function renderCharManagement() {
       <div class="name-label">${c.name}</div>
     </div>
   `).join('');
+}
+
+function initOwnershipTools() {
+  document.getElementById('btn-edit-ownership').addEventListener('click', openOwnershipEditor);
+}
+
+function validateOwnershipImport(data) {
+  const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+  if (!isRecord(data) || data.format !== 'imaginarium-theater-ownership' || data.version !== 1 ||
+      !isRecord(data.ownership) ||
+      !Object.values(data.ownership).every(owned => typeof owned === 'boolean')) {
+    throw new Error('所持状況JSONの形式が正しくありません。');
+  }
+  return data.ownership;
+}
+
+function persistOwnership(updatedCharacters) {
+  localStorage.setItem(`${STORAGE_PREFIX}chars`, JSON.stringify(updatedCharacters));
+  characters = updatedCharacters;
+  renderAll();
+}
+
+function openOwnershipEditor() {
+  const overlay = document.getElementById('modal-overlay');
+  const body = document.getElementById('modal-body');
+  setCharacterSelectModalLayout(true);
+  document.getElementById('modal-title').textContent = '所持状況を一括編集';
+
+  body.innerHTML = `
+    <div class="ownership-editor-tools">
+      <label class="ownership-search-label" for="ownership-search">キャラクター名で絞り込み</label>
+      <input id="ownership-search" class="input-text" type="search" placeholder="名前を入力">
+    </div>
+    <div id="ownership-editor-list" class="ownership-editor-list"></div>
+    <div class="ownership-editor-bulk-actions">
+      <span class="ownership-editor-bulk-title">一括変更</span>
+      <span class="ownership-editor-bulk-help">検索結果に表示中のキャラクターをまとめて変更します。</span>
+      <div class="ownership-editor-actions">
+        <button id="btn-ownership-select-all" class="btn btn-secondary btn-sm" type="button">表示中をすべて所持</button>
+        <button id="btn-ownership-clear-all" class="btn btn-secondary btn-sm" type="button">表示中をすべて未所持</button>
+      </div>
+    </div>
+    <p id="ownership-editor-status" class="help-text ownership-editor-status" role="status"></p>
+    <button id="btn-save-ownership" class="btn btn-primary" type="button">所持状況を保存</button>
+  `;
+
+  const list = body.querySelector('#ownership-editor-list');
+  const search = body.querySelector('#ownership-search');
+  const draftOwnership = new Map(characters.map(character => [character.id, character.owned]));
+  const renderRows = () => {
+    const query = search.value.trim().toLocaleLowerCase();
+    list.replaceChildren();
+    characters.forEach(character => {
+      if (query && !character.name.toLocaleLowerCase().includes(query)) return;
+      const card = document.createElement('button');
+      card.type = 'button';
+      const owned = draftOwnership.get(character.id);
+      card.className = `char-card ownership-editor-card star-${character.rarity}${owned ? ' active-selected' : ' ownership-unowned'}`;
+      card.dataset.characterId = character.id;
+      card.setAttribute('aria-pressed', String(owned));
+      card.innerHTML = `
+        <span class="elem-icon"><img src="${getElemImgSrc(character.element)}" class="elem-img"></span>
+        <img src="${getImgSrc(character.image)}" class="avatar" alt="">
+        <div class="name-label"></div>
+        <span class="ownership-state"></span>
+      `;
+      card.querySelector('.name-label').textContent = character.name;
+      card.querySelector('.ownership-state').textContent = owned ? '所持' : '未所持';
+      card.addEventListener('click', () => {
+        const owned = !draftOwnership.get(character.id);
+        draftOwnership.set(character.id, owned);
+        card.classList.toggle('active-selected', owned);
+        card.classList.toggle('ownership-unowned', !owned);
+        card.setAttribute('aria-pressed', String(owned));
+        card.querySelector('.ownership-state').textContent = owned ? '所持' : '未所持';
+      });
+      list.append(card);
+    });
+  };
+  const setVisibleOwnership = owned => {
+    const cards = [...list.querySelectorAll('.ownership-editor-card')];
+    if (cards.length === 0) return;
+    const status = owned ? '所持' : '未所持';
+    if (!confirm(`表示中の${cards.length}人をすべて「${status}」に変更しますか？`)) return;
+    cards.forEach(card => {
+      draftOwnership.set(card.dataset.characterId, owned);
+      card.classList.toggle('active-selected', owned);
+      card.classList.toggle('ownership-unowned', !owned);
+      card.setAttribute('aria-pressed', String(owned));
+      card.querySelector('.ownership-state').textContent = owned ? '所持' : '未所持';
+    });
+  };
+
+  search.addEventListener('input', renderRows);
+  body.querySelector('#btn-ownership-select-all').addEventListener('click', () => setVisibleOwnership(true));
+  body.querySelector('#btn-ownership-clear-all').addEventListener('click', () => setVisibleOwnership(false));
+  body.querySelector('#btn-save-ownership').addEventListener('click', () => {
+    const updatedCharacters = characters.map(character => ({
+      ...character,
+      owned: draftOwnership.get(character.id)
+    }));
+    try {
+      persistOwnership(updatedCharacters);
+    } catch (error) {
+      body.querySelector('#ownership-editor-status').textContent = `所持状況の保存に失敗しました: ${error.message}`;
+      return;
+    }
+    overlay.classList.add('hidden');
+  });
+
+  renderRows();
+  overlay.classList.remove('hidden');
 }
 
 function setCharacterSelectModalLayout(enabled, multiSelect = false) {
