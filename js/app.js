@@ -142,11 +142,11 @@ const CONFIG_RULES = {
     pyro: "炎", hydro: "水", anemo: "風", electro: "雷", dendro: "草", cryo: "氷", geo: "岩"
   },
   difficulties: {
-    easy: { name: "イージー", req: "8〜10人" },
-    normal: { name: "ノーマル", req: "12〜14人" },
-    hard: { name: "ハード", req: "16〜20人" },
-    master: { name: "マスター", req: "22〜26人" },
-    tsukiyomi: { name: "月諭", req: "28〜32人" }
+    easy: { name: "イージー", req: "8〜10人", sets: "2" },
+    normal: { name: "ノーマル", req: "12〜14人", sets: "3" },
+    hard: { name: "ハード", req: "16〜20人", sets: "4" },
+    master: { name: "マスター", req: "22〜26人", sets: "5" },
+    tsukiyomi: { name: "月諭", req: "28〜32人", sets: "5+2" }
   },
   roles: [
     { id: "attacker", name: "アタッカー" },
@@ -257,9 +257,13 @@ function normalizeCurrentCastSelections() {
 normalizeCurrentCastSelections();
 
 let sets = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}sets`)) || [
-  { id: "set-1", name: "パーティ A", slots: [ { role: "attacker", charId: null }, { role: "sub_attacker", charId: null }, { role: "supporter", charId: null }, { role: "healer", charId: null } ] }
+  { id: "set-1", name: "編成 1", slots: [ { role: "attacker", charId: null }, { role: "sub_attacker", charId: null }, { role: "supporter", charId: null }, { role: "healer", charId: null } ] }
 ];
-sets = sets.map(set => ({ ...set, isOpen: set.isOpen !== false }));
+sets = sets.map((set, index) => ({
+  ...set,
+  name: set.name === `パーティ ${String.fromCharCode(65 + index)}` ? `編成 ${index + 1}` : set.name,
+  isOpen: set.isOpen !== false
+}));
 
 let stageHand = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}stage_hand`)) || [];
 let stageActs = JSON.parse(localStorage.getItem(`${STORAGE_PREFIX}stage_acts`)) || [];
@@ -368,13 +372,56 @@ clampActPointer();
 
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
+  initMobileMenu();
   initCharManagement();
   initConfigTab();
   initMainTab();
   initStageTab();
   initDataTransfer();
+  initTutorialLinks();
+  initHeaderHeight();
   renderAll();
 });
+
+function initMobileMenu() {
+  const header = document.querySelector('.app-header');
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const menu = document.getElementById('header-menu');
+  const closeMenu = () => {
+    header.classList.remove('mobile-menu-open');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.setAttribute('aria-label', 'メニューを開く');
+  };
+
+  toggle.addEventListener('click', () => {
+    const isOpen = header.classList.toggle('mobile-menu-open');
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.setAttribute('aria-label', isOpen ? 'メニューを閉じる' : 'メニューを開く');
+  });
+
+  menu.addEventListener('click', event => {
+    if (event.target instanceof Element && event.target.closest('button')) {
+      closeMenu();
+    }
+  });
+
+  header.querySelector('.header-title-group').addEventListener('click', closeMenu);
+
+  document.addEventListener('click', event => {
+    if (!header.contains(event.target)) closeMenu();
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && header.classList.contains('mobile-menu-open')) {
+      closeMenu();
+      toggle.focus();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 767) closeMenu();
+  });
+}
 
 function saveData() {
   localStorage.setItem(`${STORAGE_PREFIX}chars`, JSON.stringify(characters));
@@ -486,7 +533,7 @@ function initDataTransfer() {
   document.getElementById('btn-data-transfer').addEventListener('click', () => {
     setCharacterSelectModalLayout(false);
     document.querySelector('#modal-overlay .modal-window').classList.add('data-transfer-modal');
-    document.getElementById('modal-title').textContent = 'エクスポート・インポート';
+    document.getElementById('modal-title').textContent = '共有';
     body.innerHTML = `
       <div class="data-transfer-actions">
         <section class="data-transfer-group">
@@ -1055,11 +1102,32 @@ async function createStageResultImage() {
 
 
 function initTabs() {
-  document.querySelectorAll('.tab-btn, .header-title-group').forEach(btn => {
+  let titleScreenTimer = null;
+  const titleScreenButton = document.querySelector('.title-tutorial-cta');
+  const scheduleTitleScreenTransition = isTitleActive => {
+    clearTimeout(titleScreenTimer);
+    document.querySelector('.title-screen').classList.remove('show-tutorial-cta');
+    titleScreenButton.disabled = true;
+    titleScreenButton.setAttribute('aria-hidden', 'true');
+    if (isTitleActive) {
+      titleScreenTimer = setTimeout(() => {
+        if (!document.getElementById('tab-title').classList.contains('active')) return;
+        document.querySelector('.title-screen').classList.add('show-tutorial-cta');
+        titleScreenButton.disabled = false;
+        titleScreenButton.setAttribute('aria-hidden', 'false');
+      }, 3000);
+    }
+  };
+
+  document.querySelectorAll('.tab-btn, .header-title-group, .title-tutorial-cta').forEach(btn => {
     btn.addEventListener('click', () => {
+      const activeTabButton = btn.matches('.title-tutorial-cta')
+        ? document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`)
+        : btn;
       document.querySelectorAll('.tab-btn, .tab-content, .header-title-group').forEach(el => el.classList.remove('active'));
-      btn.classList.add('active');
+      activeTabButton.classList.add('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
+      scheduleTitleScreenTransition(btn.dataset.tab === 'tab-title');
     });
 
     btn.addEventListener('keydown', (event) => {
@@ -1067,6 +1135,35 @@ function initTabs() {
         event.preventDefault();
         btn.click();
       }
+    });
+  });
+
+  scheduleTitleScreenTransition(true);
+}
+
+// チュートリアル内の「＞」リンク／クイックガイド：クリックで該当タブ（または共有モーダル）へ移動する
+// 固定ヘッダーの高さをCSS変数 --header-h に反映（チュートリアルの画面区切り・スクロール位置に使う）
+function initHeaderHeight() {
+  const header = document.querySelector('.app-header');
+  if (!header) return;
+  const update = () => document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`);
+  update();
+  if ('ResizeObserver' in window) new ResizeObserver(update).observe(header);
+  window.addEventListener('resize', update);
+}
+
+function initTutorialLinks() {
+  document.querySelectorAll('#tab-tutorial [data-goto]').forEach(el => {
+    el.addEventListener('click', () => {
+      const target = el.dataset.goto;
+      if (target === 'share') {
+        document.getElementById('btn-data-transfer').click();
+        return;
+      }
+      const tabButton = document.querySelector(`.tab-btn[data-tab="${target}"]`);
+      if (!tabButton) return;
+      tabButton.click();
+      window.scrollTo({ top: 0, behavior: 'auto' });
     });
   });
 }
@@ -1270,8 +1367,9 @@ function openOwnershipEditor() {
     list.replaceChildren();
     characters.forEach(character => {
       if (query && !character.name.toLocaleLowerCase().includes(query)) return;
-      const card = document.createElement('button');
-      card.type = 'button';
+      const card = document.createElement('div');
+      card.setAttribute('role', 'button');
+      card.tabIndex = 0;
       const owned = draftOwnership.get(character.id);
       card.className = `char-card ownership-editor-card star-${character.rarity}${owned ? ' active-selected' : ' ownership-unowned'}`;
       card.dataset.characterId = character.id;
@@ -1284,6 +1382,12 @@ function openOwnershipEditor() {
       `;
       card.querySelector('.name-label').textContent = character.name;
       card.querySelector('.ownership-state').textContent = owned ? '所持' : '未所持';
+      card.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
       card.addEventListener('click', () => {
         const owned = !draftOwnership.get(character.id);
         draftOwnership.set(character.id, owned);
@@ -1560,7 +1664,7 @@ function initMainTab() {
   document.getElementById('btn-add-set').addEventListener('click', () => {
     sets.push({
       id: 'set-' + Date.now(),
-      name: `パーティ ${String.fromCharCode(65 + sets.length)}`,
+      name: `編成 ${sets.length + 1}`,
       isOpen: true,
       slots: [
         { role: "attacker", charId: null },
@@ -1678,6 +1782,8 @@ function renderMainCast() {
 
   const diffObj = CONFIG_RULES.difficulties[currentSettings.difficulty];
   document.getElementById('display-difficulty').innerText = `${diffObj.name} (${diffObj.req})`;
+  const requiredSetsLabel = document.getElementById('display-required-sets');
+  if (requiredSetsLabel) requiredSetsLabel.innerText = `必要な編成数 : ${diffObj.sets}`;
   
   const supportChar = characters.find(c => c.id === currentSettings.supportCast);
 
@@ -2392,8 +2498,19 @@ function renderStageTab() {
 }
 
 window.toggleActOpen = function(actIdx) {
-  stageActs[actIdx].isOpen = !stageActs[actIdx].isOpen;
-  saveData();
+  const act = stageActs[actIdx];
+  act.isOpen = !act.isOpen;
+
+  const actCard = document.querySelectorAll('#stage-acts-container .act-card')[actIdx];
+  const title = actCard.querySelector('.act-title-text');
+  const charNames = act.slots.map(id => {
+    const character = characters.find(item => item.id === id);
+    return character ? character.name : '—';
+  });
+  title.textContent = `${act.isOpen ? '▼' : '▶'} ${act.name} ${charNames.join('・')}`;
+  actCard.querySelector('.act-body').classList.toggle('hidden', !act.isOpen);
+
+  localStorage.setItem(`${STORAGE_PREFIX}stage_acts`, JSON.stringify(stageActs));
 };
 
 // 上演準備の枠：クリックで「本日のキャスト」から選択（公演プランと同じ方式）
@@ -2861,3 +2978,66 @@ window.selectSlotChar = function(setIdx, slotIdx, charId) {
   document.getElementById('modal-overlay').classList.add('hidden');
   saveData();
 };
+
+// iPad用：公演タブの左右ペイン切り替え（表示のみ。768〜1400px以外ではCSSでタブごと非表示）
+// 左右それぞれのタブで、出演可能キャスト(0)／公演プラン(1)／上演準備(2) のどれを表示するか選ぶ。
+// 同じパネルを左右に出すことはできないため、相手側が表示中のパネルを選んだ場合は入れ替える。
+(function initIpadStageTabs() {
+  const grid = document.querySelector('.stage-3col-grid');
+  if (!grid) return;
+  const panels = [...grid.querySelectorAll(':scope > .stage-col')];
+  const navs = {
+    left: grid.querySelector('.ipad-stage-tabs[data-pane="left"]'),
+    right: grid.querySelector('.ipad-stage-tabs[data-pane="right"]')
+  };
+  if (!navs.left || !navs.right) return;
+  const state = { left: 0, right: 2 };
+
+  const render = () => {
+    panels.forEach((panel, i) => {
+      if (state.left === i) panel.dataset.ipadPane = 'left';
+      else if (state.right === i) panel.dataset.ipadPane = 'right';
+      else delete panel.dataset.ipadPane;
+    });
+    Object.entries(navs).forEach(([pane, nav]) => {
+      nav.querySelectorAll('.ipad-stage-tab').forEach((btn, i) => {
+        const active = state[pane] === i;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      });
+    });
+  };
+
+  Object.entries(navs).forEach(([pane, nav]) => {
+    const other = pane === 'left' ? 'right' : 'left';
+    nav.querySelectorAll('.ipad-stage-tab').forEach((btn, i) => {
+      btn.addEventListener('click', () => {
+        if (state[pane] === i) return;
+        if (state[other] === i) state[other] = state[pane];
+        state[pane] = i;
+        render();
+      });
+    });
+  });
+
+  render();
+})();
+
+// スマホ用サブタブ：キャスト管理（本日のキャスト／公演プラン）、公演（出演可能キャスト／公演プラン／上演準備）
+// 表示の切り替えのみを行い、データや描画処理には触れない。PC幅ではCSSでナビごと非表示になる。
+(function initMobileSubnav() {
+  document.querySelectorAll('[data-mobile-subnav]').forEach(nav => {
+    const tab = nav.parentElement;
+    const panels = [...tab.querySelectorAll(':scope > .main-layout-grid > .card-panel, :scope > .stage-3col-grid > .stage-col')];
+    const buttons = [...nav.querySelectorAll('.mobile-subnav-btn')];
+    const show = index => {
+      panels.forEach((panel, i) => panel.classList.toggle('mobile-panel-active', i === index));
+      buttons.forEach((btn, i) => btn.classList.toggle('active', i === index));
+    };
+    buttons.forEach((btn, i) => btn.addEventListener('click', () => {
+      show(i);
+      window.scrollTo({ top: 0 });
+    }));
+    show(0);
+  });
+})();
