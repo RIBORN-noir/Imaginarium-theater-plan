@@ -898,6 +898,104 @@ body {
 .btn-block { width: 100%; }
 
 .filter-bar { display: flex; gap: 8px; }
+.ownership-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.ownership-editor-tools,
+.ownership-editor-bulk-actions,
+.ownership-editor-status,
+#btn-save-ownership {
+  grid-column: 1 / -1;
+}
+.ownership-editor-tools {
+  display: grid;
+  gap: 8px;
+}
+.ownership-search-label {
+  color: var(--text-sub);
+  font-size: 0.85rem;
+}
+.ownership-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ownership-editor-bulk-actions {
+  display: grid;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 14px 0 4px;
+  border-top: 1px solid var(--panel-border);
+}
+.ownership-editor-bulk-title {
+  color: var(--text-sub);
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+.ownership-editor-bulk-help {
+  color: var(--text-sub);
+  font-size: 0.75rem;
+}
+.ownership-editor-bulk-actions .btn {
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+.ownership-editor-list { display: contents; }
+.ownership-editor-card {
+  flex: none;
+  padding: 0;
+  color: var(--text-main);
+  font: inherit;
+  text-align: initial;
+  cursor: pointer;
+}
+.char-card.ownership-editor-card:hover:not(.assigned) {
+  transform: none;
+  box-shadow: none;
+}
+.char-card.ownership-editor-card.active-selected {
+  box-shadow: none !important;
+  transform: none;
+}
+.char-card.ownership-editor-card.ownership-unowned {
+  background: #171922;
+}
+.char-card.ownership-editor-card.star-5.active-selected,
+.char-card.ownership-editor-card.star-5.ownership-unowned {
+  border-color: var(--star5-color) !important;
+}
+.char-card.ownership-editor-card.star-4.active-selected,
+.char-card.ownership-editor-card.star-4.ownership-unowned {
+  border-color: var(--star4-color) !important;
+}
+.char-card.ownership-editor-card.ownership-unowned > .avatar,
+.char-card.ownership-editor-card.ownership-unowned > .elem-icon,
+.char-card.ownership-editor-card.ownership-unowned > .name-label {
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+.ownership-state {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 4;
+  border-radius: 10px;
+  background: var(--dark-label-bg);
+  color: var(--text-main);
+  font-size: 0.65rem;
+  line-height: 1.4;
+  padding: 2px 5px;
+}
+.ownership-editor-card.active-selected .ownership-state {
+  color: var(--accent-gold);
+}
+.ownership-editor-status {
+  margin: 0;
+}
 .element-btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .elem-btn {
@@ -961,7 +1059,60 @@ body {
 .data-transfer-actions {
   display: grid;
   width: 100%;
-  gap: 12px;
+  gap: 16px;
+}
+
+.data-transfer-group {
+  display: grid;
+  gap: 8px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.data-transfer-group:last-of-type {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.data-transfer-group h4 {
+  color: var(--accent-gold);
+  font-size: 0.95rem;
+}
+
+.data-transfer-group .help-text {
+  margin: 0;
+}
+
+.data-transfer-group-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.data-transfer-group .btn {
+  min-height: 44px;
+  border: 1px solid var(--accent-gold);
+  background: color-mix(in srgb, var(--panel-color) 92%, transparent);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.data-transfer-group .btn:hover {
+  border-color: var(--accent-gold-hover);
+  background: var(--accent-gold-hover);
+  color: var(--text-on-accent);
+  text-shadow: none;
+}
+
+.data-transfer-group .btn:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+.data-transfer-group-actions .btn {
+  width: 100%;
 }
 
 #data-transfer-status {
