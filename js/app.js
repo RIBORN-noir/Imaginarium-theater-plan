@@ -485,6 +485,7 @@ function initDataTransfer() {
   const ownershipFileInput = document.getElementById('import-ownership-json-input');
   document.getElementById('btn-data-transfer').addEventListener('click', () => {
     setCharacterSelectModalLayout(false);
+    document.querySelector('#modal-overlay .modal-window').classList.add('data-transfer-modal');
     document.getElementById('modal-title').textContent = 'エクスポート・インポート';
     body.innerHTML = `
       <div class="data-transfer-actions">
@@ -1331,6 +1332,7 @@ function openOwnershipEditor() {
 
 function setCharacterSelectModalLayout(enabled, multiSelect = false) {
   const modalWindow = document.querySelector('#modal-overlay .modal-window');
+  modalWindow.classList.remove('data-transfer-modal');
   modalWindow.classList.toggle('character-select-modal', enabled);
   modalWindow.classList.toggle('multi-select-modal', multiSelect);
 }
