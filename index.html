@@ -253,7 +253,10 @@
             </select>
           </div>
         </div>
-        <p class="help-text">キャラカードをクリックすると、編集・削除を行えます。</p>
+        <p class="help-text">キャラカードをクリックすると、編集・削除を行えます。所持状況はJSONで読み込み･出力可能です｡</p>
+        <div class="ownership-tools">
+          <button id="btn-edit-ownership" class="btn btn-primary btn-sm" type="button">所持状況を一括編集</button>
+        </div>
         <div id="char-management-list" class="cast-grid"></div>
       </section>
     </div>
@@ -317,6 +320,8 @@
   </div>
 
   <input id="import-json-input" type="file" accept=".json,application/json" hidden>
+  <input id="import-ownership-json-input" type="file" accept=".json,application/json" hidden>
+  <input id="import-ownership-json-input" type="file" accept=".json,application/json" hidden>
 
   <script src="js/app.js"></script>
 </body>
