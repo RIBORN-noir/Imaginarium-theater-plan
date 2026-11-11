@@ -1033,6 +1033,10 @@ body {
   flex-direction: column;
 }
 
+.modal-window.data-transfer-modal {
+  background: var(--panel-color);
+}
+
 .modal-window.character-select-modal {
   width: 780px;
   max-width: calc(100vw - 32px);
