@@ -88,7 +88,9 @@ body {
   --header-padding-bottom: 15px;
   --header-color: #09091a; /* ヘッダーの色 */
   --header-opacity: 45%; /* ヘッダーの透明度 */
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   width: calc(100% + 40px);
   justify-content: space-between;
@@ -97,7 +99,13 @@ body {
   margin-top: -20px;
   margin-left: -20px;
   margin-right: -20px;
-  background: color-mix(in srgb, var(--header-color) var(--header-opacity), transparent);
+  /* ヘッダー色（半透明）の下に、ページ背景と同じ画像を敷く。
+     スクロールで下を通るコンテンツはこの背景に隠れ、ヘッダー→背景→コンテンツの順に見える */
+  background:
+    linear-gradient(color-mix(in srgb, var(--header-color) var(--header-opacity), transparent),
+                    color-mix(in srgb, var(--header-color) var(--header-opacity), transparent)),
+    url("../assets/ui/theater_background.png") center center / cover fixed no-repeat,
+    var(--bg-color);
   padding-top: 20px;
   padding-left: 20px;
   padding-right: 20px;
@@ -111,9 +119,14 @@ body {
 
 .header-left-group {
   display: flex;
+  flex: 1;
   align-items: center;
   gap: 24px;
   align-self: stretch;
+}
+
+.header-menu {
+  display: contents;
 }
 
 .header-right-group {
@@ -121,6 +134,11 @@ body {
   align-items: center;
   gap: 14px;
   align-self: stretch;
+  margin-left: auto;
+}
+
+.mobile-menu-toggle {
+  display: none;
 }
 
 .tab-nav {
@@ -140,7 +158,21 @@ body {
   font-weight: bold;
   cursor: pointer;
   font-size: 0.95rem;
-  transition: color 0.2s ease;
+  transition: color 0.25s ease, transform 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.app-header .tab-btn:active,
+.header-title-group:active {
+  transform: scale(0.99);
+}
+
+.app-header .tab-btn:hover,
+.header-title-group:hover {
+  transform: translateY(-2px);
+}
+
+.app-header .icon-btn:hover {
+  transform: translateY(-2px);
 }
 
 .tab-btn:hover {
@@ -177,7 +209,11 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0.75;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease, transform 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.app-header .icon-btn:active {
+  transform: scale(0.97);
 }
 
 .icon-btn:hover,
@@ -310,7 +346,7 @@ body {
 /* メイン画面レイアウト */
 .title-with-count {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 12px;
 }
 
@@ -735,7 +771,7 @@ body {
   cursor: default;
 }
 
-/* 予備キャストのカード位置を、公演プランの4列スロットに揃える */
+/* 予備キャストは通常4列。タブレット以下ではカード幅に応じて折り返す */
 #stage-reserve-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1038,7 +1074,7 @@ body {
 }
 
 .modal-window.character-select-modal {
-  width: 780px;
+  width: 1000px;
   max-width: calc(100vw - 32px);
 }
 
@@ -1126,15 +1162,16 @@ body {
 
 .modal-window.character-select-modal .modal-body {
   display: grid;
-  grid-template-columns: repeat(6, 110px);
-  justify-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  justify-content: stretch;
   align-content: start;
+  gap: 8px;
   overflow-x: auto;
   overflow-y: auto;
 }
 
 .modal-window.multi-select-modal .modal-body {
-  grid-template-columns: repeat(6, 110px);
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
 }
 
 .multi-select-card .team-selection-order {
@@ -1222,6 +1259,7 @@ body {
   align-items: center;
   gap: 12px;
   cursor: pointer;
+  transition: transform 0.24s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 .header-icon {
@@ -1252,10 +1290,79 @@ h2:has(.heading-icon) {
   text-align: center;
 }
 
-.title-screen img {
+.title-screen-brand,
+.title-tutorial-cta {
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.title-screen-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.title-screen-brand img {
   width: 160px;
   height: 160px;
   object-fit: contain;
+}
+
+.title-screen-brand h2 {
+  color: var(--accent-gold);
+}
+
+.title-tutorial-cta {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  padding: 8px 18px;
+  margin-top: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--accent-gold);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-gold);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+  transition: opacity 0.7s ease, transform 0.7s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.title-tutorial-cta:hover,
+.title-tutorial-cta:focus-visible {
+  border-color: var(--accent-gold);
+  background: var(--accent-gold);
+  color: var(--text-on-accent);
+  box-shadow: 0 4px 18px var(--gold-shadow);
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 4px;
+}
+
+.title-screen.show-tutorial-cta .title-tutorial-cta {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title-tutorial-cta,
+  .app-header .tab-btn,
+  .app-header .icon-btn,
+  .header-title-group {
+    transition: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .title-tutorial-cta {
+    margin-top: 40px;
+  }
 }
 
 body:has(#tab-title.active) .site-disclaimer {
@@ -1266,7 +1373,7 @@ body:has(#tab-title.active) .site-disclaimer {
 @media (max-width: 1100px) {
   body {
     padding: 16px;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .app-header {
@@ -1343,7 +1450,7 @@ body:has(#tab-title.active) .site-disclaimer {
 @media (max-width: 767px) {
   body {
     padding: 10px;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   .app-header {
@@ -1351,20 +1458,29 @@ body:has(#tab-title.active) .site-disclaimer {
     margin-top: -10px;
     margin-left: -10px;
     margin-right: -10px;
-    padding: 12px 10px 10px;
-    gap: 10px;
-    flex-wrap: wrap;
+    padding: 10px;
+    flex-wrap: nowrap;
     align-items: center;
   }
 
   .header-left-group {
-    width: 100%;
-    display: contents;
+    width: auto;
+    min-width: 0;
+    gap: 8px;
+    justify-content: space-between;
+    align-self: center;
   }
 
   .header-title-group {
+    flex: 1;
     min-width: 0;
     gap: 8px;
+  }
+
+  .header-title-group h1 {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .header-icon {
@@ -1377,23 +1493,103 @@ body:has(#tab-title.active) .site-disclaimer {
     white-space: nowrap;
   }
 
+  .mobile-menu-toggle {
+    display: flex;
+    flex: 0 0 42px;
+    width: 42px;
+    height: 42px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    background: var(--panel-bg);
+    cursor: pointer;
+  }
+
+  .mobile-menu-toggle span {
+    width: 20px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--accent-gold);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .app-header.mobile-menu-open .mobile-menu-toggle span:first-child {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .app-header.mobile-menu-open .mobile-menu-toggle span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .app-header.mobile-menu-open .mobile-menu-toggle span:last-child {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .header-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 10px;
+    right: 10px;
+    z-index: 101;
+    padding: 8px 12px;
+    border: 1px solid var(--panel-border);
+    border-top: 0;
+    border-radius: 0 0 8px 8px;
+    background: color-mix(in srgb, var(--panel-color) 96%, transparent);
+    box-shadow: 0 12px 24px var(--shadow-color);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .app-header.mobile-menu-open .header-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
   .tab-nav {
-    order: 3;
-    width: 100%;
-    gap: 18px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: thin;
+    display: grid;
+    width: auto;
+    gap: 0;
+    overflow: visible;
+    padding: 0;
   }
 
   .tab-nav .tab-btn {
-    flex: 0 0 auto;
-    white-space: nowrap;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--panel-border);
+    text-align: left;
+    white-space: normal;
+  }
+
+  .tab-nav .tab-btn.active {
+    border-left: 2px solid var(--accent-gold);
+    background: var(--soft-gold-bg);
+  }
+
+  .tab-nav .tab-btn.active::after,
+  .header-right-group .icon-btn.active::after {
+    display: none;
   }
 
   .header-right-group {
-    margin-left: auto;
+    margin-left: 0;
+    padding-top: 8px;
+    justify-content: space-between;
     gap: 8px;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--panel-border);
+  }
+
+  .header-right-group .icon-btn {
+    align-self: center;
   }
 
   .difficulty-label {
@@ -1455,14 +1651,6 @@ body:has(#tab-title.active) .site-disclaimer {
 
   .main-layout-grid > .card-panel:last-child {
     order: 2;
-  }
-
-  .chars-layout-grid .cast-grid,
-  #stage-hand-container,
-  #stage-hand-performed-container {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    justify-items: stretch;
   }
 
   .chars-layout-grid .char-card,
@@ -1637,38 +1825,928 @@ body:has(#tab-title.active) .site-disclaimer {
 }
 
 
-/* 公演画面：出演可能キャスト／出演済みキャストは4列固定。
-   PCの既存カードサイズ・上演準備の110×140は変更しない。 */
+/* ===============================================================
+   チュートリアル（はじめての方へ＋クイックガイド＋フルページ長文）
+   =============================================================== */
+html {
+  --header-h: 80px; /* JSが実際のヘッダー高さで上書きする */
+  scroll-padding-top: var(--header-h);
+}
+
+html:has(#tab-tutorial.active) {
+  scroll-snap-type: y mandatory;
+}
+
+.tutorial-hero,
+.tutorial-section {
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100dvh - var(--header-h));
+  scroll-snap-align: start;
+}
+
+.tutorial-hero {
+  scroll-margin-top: 20px; /* ヘッダー下の余白ぶん。ページ最上部(0)に揃える */
+}
+
+.tutorial-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0 40px;
+}
+
+.tutorial-hero-inner {
+  width: 100%;
+  max-width: 900px;
+}
+
+.tutorial-hero-inner h2 {
+  color: var(--accent-gold);
+  font-size: 1.9rem;
+  margin-bottom: 16px;
+}
+
+.tutorial-hero-inner .tutorial-lead {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+
+.tutorial-scroll-hint {
+  margin-top: 28px;
+  text-align: center;
+  letter-spacing: 0.08em;
+}
+
+.tutorial-subtle-text,
+.tutorial-section-body p.tutorial-subtle-text {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+/* クイックガイド */
+.quick-guide {
+  --qg-icon-color: #ead7ad; /* キャラクター管理アイコンのカード色に合わせる */
+  margin-top: 24px;
+  padding: 24px 28px 20px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+}
+
+.quick-guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quick-guide-header h3 {
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.quick-guide-sub {
+  margin: 14px 0 18px;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+}
+
+.quick-guide-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.quick-guide-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.quick-guide-item:hover,
+.quick-guide-item:focus-visible {
+  transform: translateY(-3px);
+  background: var(--soft-gold-slot-bg);
+  color: var(--accent-gold);
+  outline: none;
+}
+
+.qg-num {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-sub);
+}
+
+.qg-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.qg-icon svg {
+  width: 44px;
+  height: 44px;
+  display: block;
+  fill: none;
+  stroke: var(--qg-icon-color);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s ease;
+}
+
+.quick-guide-item:hover .qg-icon svg,
+.quick-guide-item:focus-visible .qg-icon svg {
+  stroke: var(--accent-gold);
+}
+
+
+.qg-icon img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: block;
+}
+
+.qg-text {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  gap: 6px;
+}
+
+.qg-title {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.qg-desc {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--text-sub);
+}
+
+.quick-guide-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.quick-guide-share {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+.quick-guide-share .qg-icon,
+.quick-guide-share .qg-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.quick-guide-share .qg-text {
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.quick-guide-share .qg-title {
+  font-size: 1.1rem;
+}
+
+/* 長文：左にタイトル／右に本文 */
+.tutorial-long {
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+.tutorial-section {
+  display: grid;
+  grid-template-columns: minmax(300px, 42%) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+  padding: 48px 0;
+  border-top: 1px solid var(--panel-border);
+}
+
+.tutorial-section-title {
+  font-size: clamp(1.1rem, 1.9vw, 1.4rem);
+  line-height: 1.5;
+  color: var(--accent-gold);
+  margin: 0;
+  text-wrap: balance;      /* 折り返す場合も行の長さを揃える */
+  word-break: auto-phrase; /* 折り返す場合は文節の区切りで */
+}
+
+.tutorial-section-body {
+  padding-left: 32px;
+  border-left: 1px solid var(--panel-border);
+}
+
+.tutorial-section-body p {
+  font-size: 1rem;
+  line-height: 1.9;
+  margin-bottom: 14px;
+}
+
+.tutorial-subhead {
+  margin: 24px 0 8px;
+  font-size: 1.05rem;
+  color: var(--text-main);
+}
+
+.tutorial-list {
+  margin: 0 0 14px 1.3em;
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.tutorial-section-body .tutorial-table {
+  margin: 12px 0 18px;
+}
+
+.tutorial-link {
+  margin-top: 8px;
+  padding: 4px 0;
+  border: none;
+  border-bottom: 1px solid var(--accent-gold);
+  background: transparent;
+  color: var(--accent-gold);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.tutorial-link:hover,
+.tutorial-link:focus-visible {
+  color: var(--accent-gold-hover);
+  border-color: var(--accent-gold-hover);
+  transform: translateX(4px);
+  outline: none;
+}
+
 @media (max-width: 1100px) {
-  #stage-hand-container,
-  #stage-hand-performed-container {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 8px !important;
-    min-width: 0 !important;
-  }
-
-  #stage-hand-container .char-card,
-  #stage-hand-performed-container .char-card {
-    width: 100% !important;
-    max-width: none !important;
-    min-width: 0 !important;
-    height: auto !important;
-    aspect-ratio: 110 / 140 !important;
-  }
-
-  #stage-hand-container .char-card img.avatar,
-  #stage-hand-performed-container .char-card img.avatar {
-    width: 100% !important;
-    height: auto !important;
-    aspect-ratio: 1 !important;
+  .tutorial-section {
+    gap: 28px;
   }
 }
 
 @media (max-width: 767px) {
-  #stage-hand-container,
-  #stage-hand-performed-container {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 4px !important;
+  html:has(#tab-tutorial.active) {
+    scroll-snap-type: none;
   }
+
+  .tutorial-hero,
+  .tutorial-section {
+    min-height: 0;
+  }
+
+  .tutorial-hero {
+    padding: 12px 0 24px;
+  }
+
+  .tutorial-hero-inner h2 {
+    font-size: 1.5rem;
+  }
+
+  .quick-guide {
+    padding: 16px 14px;
+  }
+
+  /* スマホ：縦に羅列、アイコンの横にテキスト */
+  .quick-guide-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .quick-guide-item {
+    display: grid;
+    grid-template-columns: 28px 48px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+    padding: 10px 6px;
+    text-align: left;
+  }
+
+  .qg-text {
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .quick-guide-share {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .quick-guide-share .qg-icon,
+  .quick-guide-share .qg-icon svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tutorial-scroll-hint {
+    display: none;
+  }
+
+  .tutorial-section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 32px 0;
+  }
+
+  .tutorial-section-title {
+    font-size: 1.2rem;
+  }
+
+  .tutorial-section-body {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .tutorial-section-body p,
+  .tutorial-list {
+    font-size: 0.95rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-guide-item,
+  .tutorial-link {
+    transition: none;
+  }
+}
+
+/* ===============================================================
+   スマホ／タブレット レイアウト（〜1400px）
+   考え方：
+   ・カードの大きさを先に決める（基本 110×140、縦横比は固定）
+   ・列は「4列」。1列の幅は「最大110px」で、入れ物が狭いときだけ
+     縮む（拡大はしない）。だから大きくなりすぎない
+   ・カード内の画像と名前は絶対配置。高さは縦横比だけで決まるので
+     上下が切れることがない
+   ・1400px超（PC）は従来のまま
+   =============================================================== */
+@media (max-width: 1400px) {
+
+  /* ---- カードの中身：高さは縦横比だけで決める ---- */
+  .char-card > img.avatar,
+  .party-slot > img.avatar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+  }
+
+  .char-card > .name-label,
+  .party-slot > .name-label {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 21.4286%; /* 30 / 140 */
+    padding: 0 2px;
+    font-size: 0.7rem;
+    line-height: 1.1;
+  }
+
+  /* 元素アイコン：カード幅の20%（最大24px） */
+  .char-card .elem-icon,
+  .party-slot .elem-icon {
+    top: 3%;
+    left: 3%;
+    width: 20%;
+    max-width: 24px;
+    height: auto;
+    aspect-ratio: 1;
+    padding: 1.8%;
+  }
+
+  .vitality-badge {
+    top: 3%;
+    right: 3%;
+    font-size: 0.65rem;
+    padding: 0 4px;
+  }
+
+  .ownership-state {
+    top: 3%;
+    right: 3%;
+    font-size: 0.6rem;
+    padding: 1px 4px;
+  }
+
+  .multi-select-card .team-selection-order {
+    top: 3%;
+    right: 3%;
+    width: 20%;
+    max-width: 24px;
+    height: auto;
+    aspect-ratio: 1;
+    font-size: 0.7rem;
+  }
+
+  .party-slot .slot-placeholder {
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.3;
+    padding: 0 2px;
+  }
+
+  .char-card.support-slot {
+    gap: 2px;
+  }
+
+  .char-card.support-slot .plus-icon {
+    font-size: 1.2rem;
+  }
+
+  .char-card.support-slot .support-label {
+    font-size: 0.65rem;
+  }
+
+  /* ---- 4列。1列は最大110px、狭いときだけ縮む ---- */
+  /* 「最低4枚、幅があれば110px幅のまま増やす」
+     1列の最小幅 = min(110px, 入れ物幅の1/4)。狭いときは4列で縮み、広いときは110pxのまま列が増える */
+  .cast-grid:not(.collapsed),
+  .party-row {
+    --card-gap: 8px;
+    /* 列幅は固定値1つ（最大110px／入れ物幅の1/4のうち小さい方）。
+       auto-fill は max 側の値で列数を数えるため、min/max を同じ値にしないと狭い画面で3列になる。
+       -0.5px は端数誤差で4列目が溢れて3列になるのを防ぐ安全マージン */
+    --card-size: min(110px, calc((100% - 3 * var(--card-gap)) / 4 - 0.5px));
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--card-size));
+    grid-auto-rows: max-content;
+    justify-content: start;
+    gap: var(--card-gap);
+    overflow: visible;
+    margin-right: 0;
+    padding-right: 0;
+    min-width: 0;
+  }
+
+  /* パーティ枠(セット)は枠の内側余白ぶんを含めて最大124px */
+  .set-slots,
+  .stage-col .set-slots,
+  .stage-col .act-body {
+    grid-template-columns: repeat(4, minmax(0, 124px));
+    justify-content: start;
+    gap: 6px;
+  }
+
+  .stage-col #stage-reserve-container {
+    --reserve-card-gap: 6px;
+    --reserve-card-size: min(110px, calc((100% - 3 * var(--reserve-card-gap)) / 4 - 0.5px));
+    grid-template-columns: repeat(auto-fill, var(--reserve-card-size));
+    justify-content: center;
+    gap: var(--reserve-card-gap);
+    margin: 0;
+  }
+
+  .act-body,
+  .stage-col .act-body {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 110px));
+    justify-content: start;
+    gap: 6px;
+  }
+
+  .set-slot-item {
+    min-width: 0;
+  }
+
+  .stage-col #stage-reserve-container > .char-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 110 / 140;
+  }
+
+  /* 枠に入るカードは、枠の幅に追従（比率は固定） */
+  .cast-grid > .char-card,
+  .cast-grid > .party-slot,
+  .party-row > .party-slot,
+  .set-slot-item .party-slot,
+  .act-body .party-slot,
+  .modal-window.character-select-modal .modal-body .char-card {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 110 / 140;
+    flex: none;
+  }
+
+  /* ---- 選択モーダル：最低4枚、広ければ110pxのまま列を増やす ---- */
+  .modal-window.character-select-modal {
+    width: min(780px, calc(100vw - 20px));
+    max-width: none;
+  }
+
+  .modal-window.character-select-modal .modal-body,
+  .modal-window.multi-select-modal .modal-body {
+    --card-gap: 8px;
+    --card-size: min(110px, calc((100% - 3 * var(--card-gap)) / 4 - 0.5px));
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--card-size));
+    /* 行の高さをカードの実寸で固定する。
+       これがないと、モーダルの高さ制限で行が押し潰され、カードが重なる／見切れる */
+    grid-auto-rows: max-content;
+    justify-content: center;
+    align-content: start;
+    gap: var(--card-gap);
+    padding: 12px 12px 14px;
+    overflow-x: hidden;
+    min-height: 0;
+  }
+
+  .modal-window.character-select-modal .modal-body > .char-card {
+    align-self: start;
+  }
+
+  .modal-window.character-select-modal .modal-body > .help-text,
+  .modal-window.character-select-modal .modal-body > p {
+    grid-column: 1 / -1;
+  }
+
+  /* 「クリア(空枠)」は先頭の横長ボタン */
+  .modal-window.character-select-modal .modal-body > .party-slot {
+    grid-column: 1 / -1;
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    aspect-ratio: auto;
+    flex-direction: row;
+    justify-content: center;
+    padding: 10px;
+  }
+
+  .modal-window.character-select-modal .modal-body > .party-slot .slot-placeholder {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  /* 所持状況の一括編集（モーダル内で全幅を使い、最低4枚・広ければ増やす） */
+  /* （.ownership-editor-list はファイル後方のPC用定義より後で上書きする必要があるため、そちらに記載） */
+}
+
+/* ===============================================================
+   所持状況の一括編集（PC：従来どおり110px×6列）
+   =============================================================== */
+.ownership-editor-list {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fill, 110px); /* PC：モーダル幅の許す限り並べる */
+  grid-auto-rows: max-content;
+  justify-content: start;
+  gap: 12px;
+}
+
+.ownership-editor-card {
+  display: flex;
+  outline-offset: 2px;
+}
+
+@media (max-width: 1400px) {
+  .ownership-editor-list {
+    --card-gap: 8px;
+    --card-size: min(110px, calc((100% - 3 * var(--card-gap)) / 4 - 0.5px));
+    grid-template-columns: repeat(auto-fill, var(--card-size));
+    justify-content: center;
+    gap: var(--card-gap);
+  }
+}
+
+@media (max-width: 767px) {
+  .ownership-editor-list {
+    --card-gap: 4px;
+  }
+}
+
+
+/* ===============================================================
+   タブレット（768〜1400px、縦・横とも）
+   パネルの幅を「4枚のカードがちょうど入る幅」にして中央に寄せる
+   （左：4×110+余白＝490px ／ 右：4×124+余白＝564px）
+   画面がそれより狭いときだけ、列が縮んでカードも縮む
+   =============================================================== */
+@media (min-width: 768px) and (max-width: 1400px) {
+
+  .app-header {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .header-left-group {
+    flex-wrap: wrap;
+    gap: 12px 18px;
+  }
+
+  .app-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .tab-nav {
+    gap: 14px;
+  }
+
+  body {
+    overflow-x: clip;
+  }
+
+  .main-layout-grid {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .main-layout-grid > .card-panel,
+  .stage-col.card-panel {
+    min-width: 0;
+    padding: 12px;
+  }
+
+  /* 公演（iPad）：左右2ペイン。各ペインのタブで
+     出演可能キャスト／公演プラン／上演準備 を切り替える（選ばれなかった1枚は非表示） */
+  .stage-3col-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    gap: 8px 12px;
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
+  .stage-3col-grid > .ipad-stage-tabs {
+    display: grid;
+    grid-row: 1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .ipad-stage-tabs[data-pane="left"] { grid-column: 1; }
+  .ipad-stage-tabs[data-pane="right"] { grid-column: 2; }
+
+  .ipad-stage-tab {
+    min-width: 0;
+    padding: 9px 4px;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    background: var(--panel-bg);
+    color: var(--text-sub);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: bold;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+
+  .ipad-stage-tab.active {
+    border-color: var(--accent-gold);
+    background: var(--soft-gold-bg);
+    color: var(--accent-gold);
+  }
+
+  .stage-col {
+    min-width: 0;
+    min-height: 0;
+    display: none;
+  }
+
+  .stage-3col-grid > .stage-col[data-ipad-pane="left"] {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .stage-3col-grid > .stage-col[data-ipad-pane="right"] {
+    display: block;
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .stage-col .panel-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .stage-col .heading-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .stage-col .panel-header h2 {
+    font-size: 1.05rem;
+  }
+
+  .stage-col .set-card {
+    padding: 8px;
+  }
+
+  .stage-col .set-slot-item {
+    padding: 3px;
+    gap: 4px;
+  }
+
+  .stage-col .act-body {
+    padding: 8px;
+  }
+
+  .stage-col #stage-reserve-container {
+    margin: 0;
+  }
+
+  .stage-col .cast-grid:not(.collapsed) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--card-size));
+    justify-content: center;
+  }
+
+  .stage-col .set-slots,
+  .stage-col .act-body,
+  .stage-col #stage-reserve-container,
+  #sets-container .set-slots {
+    justify-content: center;
+  }
+
+  .config-center-panel {
+    max-width: 760px;
+  }
+
+  .tutorial-center-panel {
+    max-width: 100%;
+  }
+
+  .chars-layout-grid {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+
+  .filter-bar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* ===============================================================
+   スマホ（〜767px）
+   =============================================================== */
+@media (max-width: 767px) {
+
+  .cast-grid:not(.collapsed),
+  .party-row,
+  .modal-window.character-select-modal .modal-body,
+  .modal-window.multi-select-modal .modal-body,
+  .ownership-editor-list {
+    --card-gap: 4px;
+  }
+
+  .modal-window.character-select-modal .modal-body {
+    padding: 10px;
+  }
+
+  .char-card > .name-label,
+  .party-slot > .name-label {
+    font-size: 0.6rem;
+  }
+
+  .set-card {
+    padding: 8px;
+  }
+
+  .set-slots {
+    gap: 4px;
+  }
+
+  .cast-grid:not(.collapsed) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  #opening-cast-container {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  #special-cast-container {
+    --special-card-size: calc((100% - 5 * var(--card-gap)) / 6);
+    grid-template-columns: repeat(4, var(--special-card-size));
+    justify-content: center;
+  }
+
+  .stage-col .set-slots,
+  .stage-col .act-body {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .stage-col .set-slots,
+  .stage-col .act-body {
+    gap: 4px;
+  }
+
+  .stage-col #stage-reserve-container {
+    --reserve-card-gap: 4px;
+    --reserve-card-size: min(110px, calc((100% - 3 * var(--reserve-card-gap)) / 4 - 0.5px));
+    grid-template-columns: repeat(auto-fill, var(--reserve-card-size));
+    justify-content: center;
+    gap: var(--reserve-card-gap);
+  }
+
+  #opening-cast-container .party-slot > .name-label,
+  #special-cast-container .party-slot > .name-label {
+    font-size: clamp(0.45rem, 2vw, 0.55rem);
+    line-height: 1;
+    padding: 0 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .set-slot-item {
+    padding: 3px;
+    gap: 4px;
+  }
+
+  .set-slot-item select {
+    font-size: 0.65rem;
+    padding: 1px 0;
+  }
+}
+
+/* ===============================================================
+   スマホ用サブタブ（キャスト管理／公演）。PC・タブレットでは非表示
+   =============================================================== */
+.mobile-subnav {
+  display: none;
+}
+
+/* iPad用ペイン切り替えタブ（768〜1400pxのみ表示） */
+.ipad-stage-tabs {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .mobile-subnav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 4px;
+    position: sticky;
+    top: var(--header-h);
+    z-index: 90;
+    margin: 0 -10px 10px;
+    padding: 6px 10px;
+    background: color-mix(in srgb, var(--bg-color) 90%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .mobile-subnav-btn {
+    min-width: 0;
+    padding: 9px 4px;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    background: var(--panel-bg);
+    color: var(--text-sub);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: bold;
+    line-height: 1.3;
+    cursor: pointer;
+  }
+
+  .mobile-subnav-btn.active {
+    border-color: var(--accent-gold);
+    background: var(--soft-gold-bg);
+    color: var(--accent-gold);
+  }
+
+  .main-layout-grid > .card-panel:not(.mobile-panel-active) {
+    display: none;
+  }
+
+  .stage-col.mobile-panel-active {
+    display: block;
+  }
+}
+
+.stage-col .act-body.hidden {
+  display: none;
 }
