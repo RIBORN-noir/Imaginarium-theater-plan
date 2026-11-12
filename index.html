@@ -141,7 +141,7 @@
 
         <div class="stage-sub-section" id="stage-performed-section" style="display:none;">
           <h3>出演済みキャスト</h3>
-          <p class="help-text">現在の幕（下の←→で指定）より前に活力を使い切ったキャラはここに移動します。</p>
+          <p class="help-text">現在のステージ（下の←→で指定）より前に活力を使い切ったキャラはここに移動します。</p>
           <div id="stage-hand-performed-container" class="cast-grid"></div>
         </div>
       </section>
@@ -158,6 +158,18 @@
           <h3>予備キャスト</h3>
           <div id="stage-reserve-container" class="set-slots"></div>
         </div>
+
+        <div class="stage-sub-section" id="stage-performed-sets-section" style="display:none;">
+          <h3>出演済みの編成</h3>
+          <p class="help-text">編成内の全員が活力を使い切ると、ここへ移動します。</p>
+          <div id="stage-performed-sets-container" class="sets-list"></div>
+        </div>
+
+        <div class="stage-sub-section" id="stage-performed-reserve-section" style="display:none;">
+          <h3>出演済みの予備キャスト</h3>
+          <p class="help-text">活力を使い切った予備キャストはここへ移動します。</p>
+          <div id="stage-performed-reserve-container" class="set-slots"></div>
+        </div>
       </section>
 
       <!-- 右列：上演準備（幕ごとの編成） -->
@@ -171,7 +183,7 @@
             <button id="btn-act-rewind" class="btn btn-secondary btn-sm" title="3幕または6幕のクリア時点まで戻る">巻き戻し</button>
           </div>
         </div>
-        <p class="help-text">表示中の幕より前は「クリア済み」として扱われ、活力を使い切ったキャラは出演可能キャストから一時的に外れます。</p>
+        <p class="help-text">表示中のステージより前は「クリア済み」として扱われ、活力を使い切ったキャラは出演可能キャストから一時的に外れます。</p>
         <div class="stage-reset-actions">
           <button id="btn-reset-stage" class="btn btn-danger btn-sm" title="上演準備の配置と手札を初期状態に戻す">編成・手札をリセット</button>
         </div>
