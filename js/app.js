@@ -2500,13 +2500,12 @@ function renderStageTab() {
     }
   });
 
-  function renderHandCard(c) {
+  function renderHandCard(c, performed = false) {
     const isAdded = stageHand.includes(c.id);
     const usage = vitalityMap[c.id] || 0;
     const isExhausted = usage >= 2;
 
-    // 未追加キャラのみグレーアウト。追加済みは2/2に達しても通常表示のまま。
-    const grayClass = !isAdded ? 'is-grayed' : '';
+    const grayClass = !isAdded || performed ? 'is-grayed' : '';
     // 使用済み(2/2)のキャラは、新規のドラッグ配置のみ不可にする（カーソルも矢印に）
     const isDraggable = !isExhausted;
     const cursorStyle = isDraggable ? '' : 'cursor: default;';
@@ -2530,7 +2529,7 @@ function renderStageTab() {
   if (performedSection && performedContainer) {
     if (performedChars.length > 0) {
       performedSection.style.display = '';
-      performedContainer.innerHTML = performedChars.map(renderHandCard).join('');
+      performedContainer.innerHTML = performedChars.map(character => renderHandCard(character, true)).join('');
     } else {
       performedSection.style.display = 'none';
       performedContainer.innerHTML = '';
@@ -2603,8 +2602,9 @@ window.openActSlotSelectModal = function(actIdx, slotIdx) {
   setCharacterSelectModalLayout(true);
   document.getElementById('modal-title').innerText = "枠にセットするキャラクターを選択";
 
-  const todayCastIds = getTodayCastIds();
-  const candidates = characters.filter(c => todayCastIds.includes(c.id));
+  const todayCastIds = new Set(getTodayCastIds());
+  const handCastIds = new Set(stageHand);
+  const candidates = characters.filter(c => todayCastIds.has(c.id) && handCastIds.has(c.id));
   const currentSlotCharId = stageActs[actIdx].slots[slotIdx];
   const vitalityMap = calculateVitality();
 
@@ -2911,7 +2911,8 @@ window.openTeamSelectionModal = function(type, targetIndex) {
   const target = type === 'set' ? sets[targetIndex] : stageActs[targetIndex];
   if (!target) return;
 
-  const todayCastIds = new Set(getTodayCastIds());
+  const eligibleCastIds = new Set(getTodayCastIds()
+    .filter(charId => type !== 'act' || stageHand.includes(charId)));
   const currentCharIds = target.slots.map(slot => type === 'set' ? slot.charId : slot);
   const currentCharIdSet = new Set(currentCharIds.filter(Boolean));
   const vitalityMap = type === 'act' ? calculateVitality() : {};
@@ -2925,7 +2926,7 @@ window.openTeamSelectionModal = function(type, targetIndex) {
 
   const allowedCharIds = new Set(characters
     .filter(char => {
-      if (!todayCastIds.has(char.id)) return false;
+      if (!eligibleCastIds.has(char.id)) return false;
       if (currentCharIdSet.has(char.id)) return true;
       if (type === 'set') return !assignedElsewhere.has(char.id);
       return (vitalityMap[char.id] || 0) < 2;
@@ -2939,7 +2940,7 @@ window.openTeamSelectionModal = function(type, targetIndex) {
   setCharacterSelectModalLayout(true, true);
   document.getElementById('modal-title').innerText = `${target.name}の編成を選択`;
   body.innerHTML = characters
-    .filter(char => todayCastIds.has(char.id))
+    .filter(char => eligibleCastIds.has(char.id))
     .map(char => {
       const selectedIndex = selectedTeamCharIds.indexOf(char.id);
       const isSelected = selectedIndex !== -1;
