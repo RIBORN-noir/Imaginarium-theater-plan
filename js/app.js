@@ -2307,23 +2307,7 @@ function initStageTab() {
 }
 
 function calculateVitality() {
-  // 手札に入っているかどうかに関わらず、実際に幕へ配置された回数を数える
-  // （待機状態＝グレーのままでも仮配置できるため、上限判定は配置実績で行う）
-  const usageMap = {};
-  stageActs.forEach(act => {
-    act.slots.forEach(id => {
-      if (id) {
-        usageMap[id] = (usageMap[id] || 0) + 1;
-      }
-    });
-  });
-  return usageMap;
-}
-
-// 「現在の幕」より前（クリア済み扱いの幕）だけを対象にした活力消費数
-// これが2に達したキャラは、実際のゲーム進行上すでに出番を使い切っているとみなし、
-// 出演可能キャストから「出演済みキャスト」へ一時的に移す。
-function calculateClearedVitality() {
+  // 活力を消費するのは、ポインタより前の幕（進行済みの幕）に出演した回数のみ。
   const clearedCount = Math.max(0, Math.min(currentActPointer - 1, stageActs.length));
   const usageMap = {};
   stageActs.slice(0, clearedCount).forEach(act => {
@@ -2334,6 +2318,19 @@ function calculateClearedVitality() {
     });
   });
   return usageMap;
+}
+
+function calculateStageAssignments() {
+  // 先の幕への仮配置も含め、キャラごとの配置数を数える（活力消費とは別）。
+  const assignmentMap = {};
+  stageActs.forEach(act => {
+    act.slots.forEach(id => {
+      if (id) {
+        assignmentMap[id] = (assignmentMap[id] || 0) + 1;
+      }
+    });
+  });
+  return assignmentMap;
 }
 
 function renderStageTab() {
@@ -2387,7 +2384,6 @@ function renderStageTab() {
   }
 
   const vitalityMap = calculateVitality();
-  const clearedVitalityMap = calculateClearedVitality();
 
   // 手札(stageHand)に入っていないキャラの見た目（グレーアウト）を共通化するヘルパー
   function grayIfNotInHand(charId) {
@@ -2485,14 +2481,14 @@ function renderStageTab() {
   //   ・手札(stageHand)に未追加のキャラ → グレーアウト表示（待機キャスト状態）
   //   ・手札に追加済みのキャラ         → 通常カラー
   //   ・活力カウントは、グレー／カラーに関わらず常に表示する
-  //   ・2/2（使用済み）でも、グレーアウト／ダークアウトは行わない（ドラッグ制御のみ裏で制御）
+  //   ・活力を使い切ったキャラはグレーアウトし、新規配置のドラッグを不可にする
   //   ・クリックすると追加／取り消しメニュー（モーダル）を開く（ドラッグ操作ができない端末向け）
   //   ・「現在の幕」より前で活力を使い切ったキャラは、出演済みキャストとして下段に分離する
   const todayCastChars = todayCastIds.map(id => characters.find(c => c.id === id)).filter(Boolean);
   const availableChars = [];
   const performedChars = [];
   todayCastChars.forEach(c => {
-    const clearedUsage = clearedVitalityMap[c.id] || 0;
+    const clearedUsage = vitalityMap[c.id] || 0;
     if (clearedUsage >= 2) {
       performedChars.push(c);
     } else {
@@ -2501,11 +2497,10 @@ function renderStageTab() {
   });
 
   function renderHandCard(c, performed = false) {
-    const isAdded = stageHand.includes(c.id);
     const usage = vitalityMap[c.id] || 0;
     const isExhausted = usage >= 2;
 
-    const grayClass = !isAdded || performed ? 'is-grayed' : '';
+    const grayClass = !stageHand.includes(c.id) || isExhausted || performed ? 'is-grayed' : '';
     // 使用済み(2/2)のキャラは、新規のドラッグ配置のみ不可にする（カーソルも矢印に）
     const isDraggable = !isExhausted;
     const cursorStyle = isDraggable ? '' : 'cursor: default;';
@@ -2524,7 +2519,7 @@ function renderStageTab() {
     `;
   }
 
-  handContainer.innerHTML = availableChars.map(renderHandCard).join('');
+  handContainer.innerHTML = availableChars.map(character => renderHandCard(character)).join('');
 
   if (performedSection && performedContainer) {
     if (performedChars.length > 0) {
@@ -2554,7 +2549,9 @@ function renderStageTab() {
         <div class="act-body ${act.isOpen ? '' : 'hidden'}">
           ${act.slots.map((charId, slotIdx) => {
             const char = characters.find(c => c.id === charId);
-            const grayClass = char ? grayIfNotInHand(char.id) : '';
+            const grayClass = char
+              ? [grayIfNotInHand(char.id), isExhausted(char.id) ? 'is-grayed' : ''].join(' ')
+              : '';
             const usage = char ? (vitalityMap[char.id] || 0) : 0;
             return `
               <div class="party-slot ${char ? 'filled star-' + char.rarity : ''} ${grayClass}"
@@ -2606,19 +2603,18 @@ window.openActSlotSelectModal = function(actIdx, slotIdx) {
   const handCastIds = new Set(stageHand);
   const candidates = characters.filter(c => todayCastIds.has(c.id) && handCastIds.has(c.id));
   const currentSlotCharId = stageActs[actIdx].slots[slotIdx];
-  const vitalityMap = calculateVitality();
+  const assignmentMap = calculateStageAssignments();
 
   body.innerHTML = `
     <div class="party-slot" onclick="selectActSlotChar(${actIdx}, ${slotIdx}, null)">
       <span class="slot-placeholder">クリア (空枠)</span>
     </div>
   ` + candidates.map(c => {
-    const usage = vitalityMap[c.id] || 0;
     const isCurrent = c.id === currentSlotCharId;
-    const isExhausted = usage >= 2 && !isCurrent;
+    const isAtPlacementLimit = (assignmentMap[c.id] || 0) >= 2 && !isCurrent;
     return `
-      <div class="char-card star-${c.rarity} ${isExhausted ? 'assigned' : ''} ${isCurrent ? 'active-selected' : ''}"
-           ${!isExhausted ? `onclick="selectActSlotChar(${actIdx}, ${slotIdx}, ${inlineStringArg(c.id)})"` : ''}>
+      <div class="char-card star-${c.rarity} ${isAtPlacementLimit ? 'assigned' : ''} ${isCurrent ? 'active-selected' : ''}"
+           ${!isAtPlacementLimit ? `onclick="selectActSlotChar(${actIdx}, ${slotIdx}, ${inlineStringArg(c.id)})"` : ''}>
         <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
         <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
         <div class="name-label">${escapeHtml(c.name)}</div>
@@ -2709,8 +2705,8 @@ function setupStageDragAndDrop() {
 
       if (type === 'stage-hand-char' || type === 'stage-plan-char' || type === 'stage-reserve-char') {
         const charId = e.dataTransfer.getData('charId');
-        const vitalityMap = calculateVitality();
-        if ((vitalityMap[charId] || 0) < 2) {
+        const assignmentMap = calculateStageAssignments();
+        if ((assignmentMap[charId] || 0) < 2) {
           // 手札に入っているかどうかに関わらず配置できる（未追加のキャラはグレーのまま仮配置される）
           stageActs[targetActIdx].slots[targetSlotIdx] = charId;
           saveData();
@@ -2915,7 +2911,7 @@ window.openTeamSelectionModal = function(type, targetIndex) {
     .filter(charId => type !== 'act' || stageHand.includes(charId)));
   const currentCharIds = target.slots.map(slot => type === 'set' ? slot.charId : slot);
   const currentCharIdSet = new Set(currentCharIds.filter(Boolean));
-  const vitalityMap = type === 'act' ? calculateVitality() : {};
+  const assignmentMap = type === 'act' ? calculateStageAssignments() : {};
 
   let assignedElsewhere = new Set();
   if (type === 'set') {
@@ -2929,7 +2925,7 @@ window.openTeamSelectionModal = function(type, targetIndex) {
       if (!eligibleCastIds.has(char.id)) return false;
       if (currentCharIdSet.has(char.id)) return true;
       if (type === 'set') return !assignedElsewhere.has(char.id);
-      return (vitalityMap[char.id] || 0) < 2;
+      return (assignmentMap[char.id] || 0) < 2;
     })
     .map(char => char.id));
 
