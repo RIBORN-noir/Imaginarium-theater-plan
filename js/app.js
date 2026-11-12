@@ -823,7 +823,7 @@ function loadExportImage(src) {
     let url = src;
     if (!src.startsWith('data:')) {
       if (window.location.protocol === 'file:') {
-        const key = src.replace(/^\.?\//, '').normalize('NFC');
+        const key = decodeURIComponent(src.replace(/^\.?\//, '')).normalize('NFC');
         const assets = await loadExportAssetData();
         if (!assets[key]) throw new Error(`選んだフォルダに画像がありません: ${key}`);
         objectUrl = URL.createObjectURL(assets[key]);
@@ -2890,7 +2890,13 @@ window.openCastSelectModal = function(type, targetIndex) {
     });
   }
 
-  body.innerHTML = candidates.map(c => `
+  const supportBlankOption = type === 'support' ? `
+    <div class="party-slot" onclick="selectModalChar(${inlineStringArg(type)}, ${targetIndex}, null)">
+      <span class="slot-placeholder">空欄にする</span>
+    </div>
+  ` : '';
+
+  body.innerHTML = supportBlankOption + candidates.map(c => `
     <div class="char-card star-${c.rarity} ${c.id === selectedId ? 'active-selected' : ''}" onclick="selectModalChar(${inlineStringArg(type)}, ${targetIndex}, ${inlineStringArg(c.id)})">
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
       <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
