@@ -282,7 +282,7 @@ let currentActPointer = parseInt(localStorage.getItem(`${STORAGE_PREFIX}act_poin
 // ===============================================================
 
 // 現在ドラッグ中の種類
-// 'char' | 'slot-char' | 'set-card' | 'slot-sort' | 'stage-hand-char' | 'act-slot-char'
+// 'char' | 'slot-char' | 'set-card' | 'slot-sort' | 'stage-hand-char' | 'stage-plan-char' | 'stage-reserve-char' | 'act-slot-char'
 let currentDragKind = null;
 
 // 公演プラン：セット内4枠の並び替え用
@@ -986,10 +986,16 @@ async function createStageResultImage() {
   const cardW = 110, cardH = 140, slotGap = 24;
   const outerPad = 40, actPad = 12, actHeaderH = 40, actGap = 10, headerH = 100;
   const actW = actPad * 2 + cardW * 4 + slotGap * 3;
-  const W = outerPad * 2 + actW;
   const actH = actHeaderH + actPad * 2 + cardH;
-  const H = headerH + stageActs.length * (actH + actGap) + outerPad - actGap;
-  const scale = Math.min(EXPORT_SCALE, 16000 / H);
+  // 難易度のステージ数の半分を1行の列数にする（例: マスター10幕なら 5+5）
+  // 月諭のアルカナ(+2)は基本ステージ数に含めず、続く行に並ぶ
+  const baseActCount = DIFFICULTY_ACT_COUNTS[currentSettings.difficulty] || stageActs.length;
+  const actColumns = Math.max(1, Math.min(stageActs.length, Math.ceil(baseActCount / 2)));
+  const actRows = Math.max(1, Math.ceil(stageActs.length / actColumns));
+  const actColGap = 16;
+  const W = outerPad * 2 + actColumns * actW + (actColumns - 1) * actColGap;
+  const H = headerH + actRows * (actH + actGap) + outerPad - actGap;
+  const scale = Math.min(EXPORT_SCALE, 16000 / H, 16000 / W);
 
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(W * scale);
@@ -1056,8 +1062,8 @@ async function createStageResultImage() {
 
   // 各幕
   stageActs.forEach((act, actIndex) => {
-    const top = headerH + actIndex * (actH + actGap);
-    const left = outerPad;
+    const top = headerH + Math.floor(actIndex / actColumns) * (actH + actGap);
+    const left = outerPad + (actIndex % actColumns) * (actW + actColGap);
 
     // パネル（.act-card）
     exportRoundRectPath(ctx, left, top, actW, actH, 6);
@@ -1764,9 +1770,12 @@ function initMainTab() {
       const groupType = groupSection ? groupSection.dataset.groupType : null;
       const charId = card.dataset.id;
 
-      if (rejectMode && groupType === 'standby') {
-        // 割り当て済み・サポートキャストは不採用選択の対象外
+      if (rejectMode && (groupType === 'standby' || groupType === 'special')) {
+        // 割り当て済み・サポートキャスト・不採用済み・未所持は不採用選択の対象外
         if (card.classList.contains('assigned') || card.dataset.isSupport === 'true') return;
+        if (card.dataset.isRejected === 'true') return;
+        const target = characters.find(ch => ch.id === charId);
+        if (!target || !target.owned) return;
         toggleCardSelection(selectedForReject, charId, card);
       } else if (restoreMode && groupType === 'rejected') {
         toggleCardSelection(selectedForRestore, charId, card);
@@ -1833,7 +1842,7 @@ function renderMainCast() {
 
   const rejectedSet = new Set(currentSettings.rejectedCast || []);
 
-  const specialListFiltered = specialCastChars.map(c => (c && rejectedSet.has(c.id)) ? null : c);
+  const specialListFiltered = specialCastChars;
   const standbyListFiltered = standbyList.filter(c => !rejectedSet.has(c.id));
 
   const rejectedList = Array.from(rejectedSet)
@@ -1850,7 +1859,9 @@ function renderMainCast() {
     html += `<div class="cast-group-section" data-group-type="special"><div class="cast-group-title ${collapsedGroups.has('special') ? 'collapsed' : ''}" onclick="toggleCollapseGroup('special')"><span>特別招待キャスト</span><span class="collapse-arrow">▼</span></div><div class="cast-grid main-cast-drop-zone ${collapsedGroups.has('special') ? 'collapsed' : ''}">`;
     html += specialListFiltered.map((c, index) => {
       if (!c) return `<div class="party-slot"><span class="slot-placeholder">+ 招待 ${index + 1}</span></div>`;
-      return renderCardHTML(c, assignedIds, false, false);
+      // 不採用にした特別招待キャストは空白にせず、グレーアウトで表示する
+      if (rejectedSet.has(c.id)) return renderCardHTML(c, assignedIds, false, false, true);
+      return renderCardHTML(c, assignedIds, false, false, false, '', false, selectedForReject.has(c.id));
     }).join('');
     html += `</div></div>`;
   }
@@ -2383,21 +2394,34 @@ function renderStageTab() {
     return (charId && !stageHand.includes(charId)) ? 'is-grayed' : '';
   }
 
-  // 1. 中央列：公演プラン（手札に入っていないキャラはグレー表示）
-  planContainer.innerHTML = sets.map((s, setIndex) => `
-    <div class="set-card">
+  // 活力を使い切った(2/2)キャラのグレーアウト判定
+  const isExhausted = charId => !!charId && (vitalityMap[charId] || 0) >= 2;
+
+  // 編成内の全員(空枠を除く)が活力を使い切っているか
+  const isSetPerformed = s => {
+    const ids = s.slots.map(sl => sl.charId).filter(Boolean);
+    return ids.length > 0 && ids.every(isExhausted);
+  };
+
+  // 1. 中央列：公演プラン（手札に入っていない／活力を使い切ったキャラはグレー表示）
+  //    出演済みの編成は下の「出演済みの編成」エリアに表示する
+  function renderPlanSetCard(s, setIndex, performed) {
+    const idPrefix = performed ? 'set-slots-stage-done' : 'set-slots-stage';
+    return `
+    <div class="set-card ${performed ? 'set-card-performed' : ''}">
       <div class="set-header">
-        <button class="set-collapse-toggle" aria-expanded="${s.isOpen}" aria-controls="set-slots-stage-${setIndex}" aria-label="${s.isOpen ? 'パーティを折り畳む' : 'パーティを展開'}" title="${s.isOpen ? '折り畳む' : '展開'}" onclick="toggleSetOpen(${setIndex})">${s.isOpen ? '▼' : '▶'}</button>
+        <button class="set-collapse-toggle" aria-expanded="${s.isOpen}" aria-controls="${idPrefix}-${setIndex}" aria-label="${s.isOpen ? 'パーティを折り畳む' : 'パーティを展開'}" title="${s.isOpen ? '折り畳む' : '展開'}" onclick="toggleSetOpen(${setIndex})">${s.isOpen ? '▼' : '▶'}</button>
         <input type="text" value="${escapeHtml(s.name)}" readonly>
       </div>
-      <div id="set-slots-stage-${setIndex}" class="set-slots ${s.isOpen ? '' : 'hidden'}">
+      <div id="${idPrefix}-${setIndex}" class="set-slots ${s.isOpen ? '' : 'hidden'}">
         ${s.slots.map((slot) => {
           const char = characters.find(c => c.id === slot.charId);
-          const grayClass = char ? grayIfNotInHand(char.id) : '';
+          const grayClass = char ? [grayIfNotInHand(char.id), isExhausted(char.id) ? 'is-grayed' : ''].join(' ') : '';
+          const canDrag = !!char && !performed && !isExhausted(char.id);
           return `
             <div class="set-slot-item">
               <div class="party-slot ${char ? 'filled star-' + char.rarity : ''} ${grayClass}"
-                   draggable="${!!char}"
+                   draggable="${canDrag}"
                    data-plan-char-id="${char ? char.id : ''}">
                 ${char ? `
                   <span class="vitality-badge">${vitalityMap[char.id] || 0}/2</span>
@@ -2411,19 +2435,51 @@ function renderStageTab() {
         }).join('')}
       </div>
     </div>
-  `).join('');
+  `;
+  }
+
+  const activeSetHtml = [];
+  const performedSetHtml = [];
+  sets.forEach((s, setIndex) => {
+    if (isSetPerformed(s)) performedSetHtml.push(renderPlanSetCard(s, setIndex, true));
+    else activeSetHtml.push(renderPlanSetCard(s, setIndex, false));
+  });
+  planContainer.innerHTML = activeSetHtml.join('');
+
+  const performedSetsSection = document.getElementById('stage-performed-sets-section');
+  const performedSetsContainer = document.getElementById('stage-performed-sets-container');
+  if (performedSetsSection && performedSetsContainer) {
+    performedSetsSection.style.display = performedSetHtml.length > 0 ? '' : 'none';
+    performedSetsContainer.innerHTML = performedSetHtml.join('');
+  }
 
   // 1. 下部：予備キャスト（本日のキャストのうち公演プランの編成枠に含まれていないキャラ）
-  //    公演プラン・上演準備と同様、手札に入っていないキャラはグレーアウト表示する
+  //    手札に入っていない／活力を使い切ったキャラはグレーアウト。活力カウントを表示し、上演準備へドラッグ可能。
   const planAssignedIds = sets.flatMap(s => s.slots.map(sl => sl.charId)).filter(Boolean);
   const reserveList = characters.filter(c => todayCastIds.includes(c.id) && !planAssignedIds.includes(c.id));
-  reserveContainer.innerHTML = reserveList.map(c => `
-    <div class="char-card star-${c.rarity} ${grayIfNotInHand(c.id)}">
+  function renderReserveCard(c) {
+    const exhausted = isExhausted(c.id);
+    return `
+    <div class="char-card star-${c.rarity} ${grayIfNotInHand(c.id)} ${exhausted ? 'is-grayed' : ''}"
+         draggable="${!exhausted}"
+         data-reserve-char-id="${escapeHtml(c.id)}"
+         ${exhausted ? 'style="cursor: default;"' : ''}>
+      <span class="vitality-badge">${vitalityMap[c.id] || 0}/2</span>
       <span class="elem-icon"><img src="${getElemImgSrc(c.element)}" class="elem-img"></span>
       <img src="${escapeHtml(getImgSrc(c.image))}" class="avatar">
       <div class="name-label">${escapeHtml(c.name)}</div>
     </div>
-  `).join('');
+  `;
+  }
+  // 活力を使い切った予備キャストは「出演済みの予備キャスト」へ分離する
+  reserveContainer.innerHTML = reserveList.filter(c => !isExhausted(c.id)).map(renderReserveCard).join('');
+  const performedReserveList = reserveList.filter(c => isExhausted(c.id));
+  const performedReserveSection = document.getElementById('stage-performed-reserve-section');
+  const performedReserveContainer = document.getElementById('stage-performed-reserve-container');
+  if (performedReserveSection && performedReserveContainer) {
+    performedReserveSection.style.display = performedReserveList.length > 0 ? '' : 'none';
+    performedReserveContainer.innerHTML = performedReserveList.map(renderReserveCard).join('');
+  }
 
   // 2. 左列：出演可能キャスト
   //   ・手札(stageHand)に未追加のキャラ → グレーアウト表示（待機キャスト状態）
@@ -2592,6 +2648,17 @@ function setupStageDragAndDrop() {
     });
   });
 
+  // 予備キャスト → 上演準備へのドラッグ
+  document.querySelectorAll('#stage-reserve-container .char-card[draggable="true"]').forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      beginDrag(e, 'stage-reserve-char');
+      e.dataTransfer.setData('charId', card.dataset.reserveCharId);
+    });
+    card.addEventListener('dragend', () => {
+      resetDragState();
+    });
+  });
+
   document.querySelectorAll('#stage-plan-container .party-slot[draggable="true"]').forEach(slot => {
     slot.addEventListener('dragstart', (e) => {
       beginDrag(e, 'stage-plan-char');
@@ -2626,7 +2693,7 @@ function setupStageDragAndDrop() {
 
     slot.addEventListener('dragover', (e) => {
       // 手札・公演プランからの配置、または幕内キャラの移動のみ受け付ける
-      if (!isDragKind('stage-hand-char', 'stage-plan-char', 'act-slot-char')) return;
+      if (!isDragKind('stage-hand-char', 'stage-plan-char', 'stage-reserve-char', 'act-slot-char')) return;
       e.preventDefault();
       slot.classList.add('drag-over');
     });
@@ -2640,7 +2707,7 @@ function setupStageDragAndDrop() {
       const targetActIdx = parseInt(slot.dataset.actIdx);
       const targetSlotIdx = parseInt(slot.dataset.slotIdx);
 
-      if (type === 'stage-hand-char' || type === 'stage-plan-char') {
+      if (type === 'stage-hand-char' || type === 'stage-plan-char' || type === 'stage-reserve-char') {
         const charId = e.dataTransfer.getData('charId');
         const vitalityMap = calculateVitality();
         if ((vitalityMap[charId] || 0) < 2) {
