@@ -583,6 +583,11 @@ body::before {
   border-color: var(--muted-border) !important;
 }
 
+.act-body .party-slot.is-grayed {
+  opacity: 0.45;
+  filter: grayscale(100%);
+}
+
 .char-card.is-grayed > .avatar,
 .char-card.is-grayed > .elem-icon,
 .char-card.is-grayed > .name-label,
