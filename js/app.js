@@ -983,15 +983,15 @@ async function createStageResultImage() {
   if (window.location.protocol === 'file:') await loadExportAssetData();
 
   const c = EXPORT_COLORS;
-  const cardW = 110, cardH = 140, slotGap = 24;
+  const cardW = 110, cardH = 140, slotGapX = 12, slotGapY = 12;
   const outerPad = 40, actPad = 12, actHeaderH = 40, actGap = 10, headerH = 100;
-  const actW = actPad * 2 + cardW * 4 + slotGap * 3;
-  const actH = actHeaderH + actPad * 2 + cardH;
-  // 難易度のステージ数の半分を1行の列数にする（例: マスター10幕なら 5+5）
-  // 月諭のアルカナ(+2)は基本ステージ数に含めず、続く行に並ぶ
+  const actW = actPad * 2 + cardW * 2 + slotGapX;
+  const actH = actHeaderH + actPad * 2 + cardH * 2 + slotGapY;
+  // 2列に縦並び（例: 6幕なら3+3、10幕なら5+5）
   const baseActCount = DIFFICULTY_ACT_COUNTS[currentSettings.difficulty] || stageActs.length;
-  const actColumns = Math.max(1, Math.min(stageActs.length, Math.ceil(baseActCount / 2)));
+  const actColumns = Math.max(1, Math.min(stageActs.length, 2));
   const actRows = Math.max(1, Math.ceil(stageActs.length / actColumns));
+  const baseActRows = Math.ceil(baseActCount / actColumns);
   const actColGap = 16;
   const W = outerPad * 2 + actColumns * actW + (actColumns - 1) * actColGap;
   const H = headerH + actRows * (actH + actGap) + outerPad - actGap;
@@ -1062,8 +1062,14 @@ async function createStageResultImage() {
 
   // 各幕
   stageActs.forEach((act, actIndex) => {
-    const top = headerH + Math.floor(actIndex / actColumns) * (actH + actGap);
-    const left = outerPad + (actIndex % actColumns) * (actW + actColGap);
+    const actRow = actIndex < baseActCount
+      ? actIndex % baseActRows
+      : baseActRows + Math.floor((actIndex - baseActCount) / actColumns);
+    const actColumn = actIndex < baseActCount
+      ? Math.floor(actIndex / baseActRows)
+      : (actIndex - baseActCount) % actColumns;
+    const top = headerH + actRow * (actH + actGap);
+    const left = outerPad + actColumn * (actW + actColGap);
 
     // パネル（.act-card）
     exportRoundRectPath(ctx, left, top, actW, actH, 6);
@@ -1087,10 +1093,10 @@ async function createStageResultImage() {
     ctx.textBaseline = 'middle';
     ctx.fillText(`▼ ${act.name}`, left + 14, top + actHeaderH / 2);
 
-    // 4枠
+    // 4枠を2×2に配置
     for (let i = 0; i < 4; i++) {
-      const x = left + actPad + i * (cardW + slotGap);
-      const y = top + actHeaderH + actPad;
+      const x = left + actPad + (i % 2) * (cardW + slotGapX);
+      const y = top + actHeaderH + actPad + Math.floor(i / 2) * (cardH + slotGapY);
       const ch = characterById.get(act.slots[i]);
       if (!ch) {
         drawExportEmptySlot(ctx, x, y, i);
